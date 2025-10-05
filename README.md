@@ -27,4 +27,4 @@ Logo采用了极简主义下的 “符号化表达”
 
 # 成员介绍
 - PROJECT MANAGER：鲍宇轩
-- TEAM MEMBER：陈宇、[范智杰](members\102301340范智杰\个人简介.md)、傅世杰、郭砚康、郭泽凯、何顺康、贾子康、[林昊](members\102301328林昊\README.md)、[余睿康](members\102301316-余睿康\hambertier.md)、[张艺宝](members\102301311张艺宝\个人简介.md)（按照名字首字母顺序排列）
+- TEAM MEMBER：陈宇、[范智杰](members/102301340范智杰/个人简介.md)、傅世杰、郭砚康、郭泽凯、何顺康、贾子康、[林昊](members/102301328林昊/README.md)、[余睿康](members/102301316-余睿康/hambertier.md)、[张艺宝](members/102301311张艺宝/个人简介.md)（按照名字首字母顺序排列）
