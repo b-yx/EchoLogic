@@ -1,0 +1,4 @@
+speechrecognition==3.10.0
+sounddevice==0.4.6
+numpy==1.24.3
+pywin32==306
