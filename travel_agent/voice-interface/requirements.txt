@@ -1,0 +1,18 @@
+# 旅行助手 - 依赖包列表
+# 安装命令: pip install -r requirements.txt
+
+# 核心语音识别
+vosk>=0.3.42
+sounddevice>=0.4.6
+
+# 数据处理
+numpy>=1.21.0
+
+# Windows语音合成
+pywin32>=300
+
+# 音频处理（vosk依赖）
+soundfile>=0.10.0
+
+# 网络请求（可选，用于未来扩展）
+requests>=2.25.0
