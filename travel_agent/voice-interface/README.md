@@ -2,7 +2,7 @@
 
 版本对比
 
-Vosk 离线版本：离线版本，需要下载 vosk-model，识别精度较差但是稳定，推荐使用 vosk 版本
+Vosk 离线版本：离线版本，识别精度较差但是稳定，推荐使用 vosk 版本
 
 Google 在线版本：在线版本，有的时候会因为网络问题无法访问
 
@@ -28,3 +28,4 @@ Google 在线版本：在线版本，有的时候会因为网络问题无法访�
         response = self.call_custom_module_a1('北京')
         return response, False
 ```
+
