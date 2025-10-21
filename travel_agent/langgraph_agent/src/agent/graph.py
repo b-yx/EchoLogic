@@ -29,6 +29,27 @@ def get_weather(city: str) -> str:
     except (KeyError, IndexError) as e:
         return f"错误：解析天气数据失败，可能是城市名称无效 - {e}"
 
+def get_introduction(city: str) -> str:
+    """通过 wttr.in API 查询指定城市的旅游景点"""
+    url = f"https://restapi.amap.com/v3/place/text?keywords=景点&region={city}&key=0b3607182ab322a7aad5d6eba763084f  # 请求JSON格式数据
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # 若状态码非200，抛出异常
+        data = response.json()
+
+        # 提取核心
+        pois = data["pois"][0]
+        introduction_address = pois["address"]
+        in_rating = pois["biz_ext"][0]["rating"]
+        in_time = pois["biz_ext"][0]["opentime2"]
+
+        return f"{city}推荐景点：{introduction_address}，该景点评分：{in_rating}，推荐前往时间：{in_time}"
+
+    except requests.exceptions.RequestException as e:
+        return f"错误：查询攻略时遇到网络问题 - {e}"
+    except (KeyError, IndexError) as e:
+        return f"错误：解析攻略数据失败，可能是城市名称无效 - {e}"
+
 graph = create_react_agent(
     llm,
     tools=[get_weather],
