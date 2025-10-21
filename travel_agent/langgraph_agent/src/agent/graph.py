@@ -54,7 +54,7 @@ def get_introduction(city: str) -> str:
             in_rating = "无评分"
             in_time = "时间未知"
 
-        return f"{city}推荐景点：{introduction_address}，该景点评分：{in_rating}，推荐前往时间：{in_time}"
+        return f"{city}推荐景点：{introduction_address}，该景点位于{introduction_address}，该景点的评分：{in_rating}，推荐前往时间：{in_time}"
 
     except requests.exceptions.RequestException as e:
         return f"错误：查询攻略时遇到网络问题 - {e}"
