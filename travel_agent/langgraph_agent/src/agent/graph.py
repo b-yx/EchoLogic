@@ -2,15 +2,18 @@ import os
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 import requests
-from src.tools.get_weather import get_weather
+# from src.tools.get_weather import get_weather
+# 上面的导入改成
+# from tools.get_weather import get_weather
+# 这份代码应该不用导入其他代码,我先注释掉了
 
-llm = ChatOpenAI(
-    model='deepseek-chat',
-    temperature=0.8,
-    base_url='https://api.deepseek.com/v1/',
-    api_key=os.environ.get("DEEPSEEK_API_KEY"),  # 从环境变量获取API密钥
-    extra_body={'chat_template_kwargs': {'enabled_thingking': False}},
-)
+# llm = ChatOpenAI(
+#     model='deepseek-chat',
+#     temperature=0.8,
+#     base_url='https://api.deepseek.com/v1/',
+#     api_key=os.environ.get("DEEPSEEK_API_KEY"),  # 从环境变量获取API密钥
+#     extra_body={'chat_template_kwargs': {'enabled_thingking': False}},
+# )
 
 def get_introduction(city: str) -> str:
     """通过高德地图API查询指定城市的旅游景点"""
@@ -44,8 +47,10 @@ def get_introduction(city: str) -> str:
     except (KeyError, IndexError) as e:
         return f"错误：解析攻略数据失败，可能是城市名称无效 - {e}"
 
-graph = create_react_agent(
-    llm,
-    tools=[get_weather,get_introduction],
-    prompt="你是智能旅行手，需要为用户查询旅游目的地的天气并推荐景点"
-)
+# graph = create_react_agent(
+#     llm,
+#     tools=[get_weather,get_introduction],
+#     prompt="你是智能旅行手，需要为用户查询旅游目的地的天气并推荐景点"
+# )
+# res = get_introduction
+# print("hello")
