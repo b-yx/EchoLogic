@@ -36,10 +36,12 @@ travel_agent/
 ### 1️⃣ 环境准备
 
 **必需条件:**
-- Python 3.9 或更高版本
+
+- Python 3.11 或更高版本
 - DeepSeek API密钥 ([获取地址](https://platform.deepseek.com/))
 
 **推荐:**
+
 - 使用虚拟环境
 
 ### 2️⃣ 安装依赖
@@ -54,8 +56,6 @@ python -m venv venv
 # 激活虚拟环境
 # Windows:
 venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
 
 # 安装依赖
 pip install -r requirements.txt
@@ -72,22 +72,7 @@ DEEPSEEK_API_KEY=your_deepseek_api_key_here
 
 ### 4️⃣ 启动后端服务
 
-**方式一：使用启动脚本（推荐）**
-
-Windows:
-```cmd
-cd langgraph_agent
-start_server.bat
-```
-
-Linux/Mac:
-```bash
-cd langgraph_agent
-chmod +x start_server.sh
-./start_server.sh
-```
-
-**方式二：直接运行**
+直接运行
 
 ```bash
 cd langgraph_agent
@@ -95,6 +80,7 @@ python api_server.py
 ```
 
 服务器启动后，你将看到：
+
 ```
 🚀 启动天气旅行助手API服务器...
 📍 访问地址: http://localhost:8000
@@ -106,6 +92,7 @@ python api_server.py
 在浏览器中打开 `travel_agent.html` 文件即可使用！
 
 推荐使用：
+
 - Google Chrome
 - Microsoft Edge
 - Safari
@@ -127,6 +114,7 @@ python api_server.py
 后端提供以下API接口：
 
 **POST /chat** - 发送聊天消息
+
 ```json
 {
   "message": "我想去北京旅行",
@@ -145,17 +133,20 @@ python api_server.py
 ## 🛠️ 技术栈
 
 **后端:**
+
 - [LangGraph](https://github.com/langchain-ai/langgraph) - AI Agent框架
 - [FastAPI](https://fastapi.tiangolo.com/) - Web框架
 - [DeepSeek](https://platform.deepseek.com/) - AI模型
 - [LangChain](https://langchain.com/) - LLM工具链
 
 **前端:**
+
 - HTML5 + JavaScript
 - [Tailwind CSS](https://tailwindcss.com/) - UI框架
 - Web Speech API - 语音识别和合成
 
 **外部API:**
+
 - [wttr.in](https://wttr.in/) - 天气查询
 - [高德地图](https://lbs.amap.com/) - 景点推荐
 
@@ -168,6 +159,7 @@ python api_server.py
 3. 在 `api_server.py` 中导入并添加到agent的tools列表
 
 示例：
+
 ```python
 from langchain_core.tools import tool
 
@@ -180,6 +172,7 @@ def my_new_tool(param: str) -> str:
 ### 自定义提示词
 
 修改 `api_server.py` 中的 `prompt` 参数：
+
 ```python
 agent = create_react_agent(
     llm,
@@ -201,14 +194,6 @@ A: 语音功能需要使用Chrome/Edge/Safari浏览器，且需要HTTPS或localh
 
 **Q: 天气查询失败**
 A: 检查网络连接，确保可以访问 wttr.in API
-
-## 📝 开发计划
-
-- [ ] 持久化对话历史（数据库存储）
-- [ ] 支持更多旅游工具（酒店、机票查询等）
-- [ ] 用户认证和权限管理
-- [ ] 多语言支持
-- [ ] 移动端优化
 
 ## 📄 许可证
 
