@@ -1,0 +1,23 @@
+# 天气旅行助手 - Python依赖包
+# 使用方法: pip install -r requirements.txt
+
+# 核心框架
+langgraph>=0.2.6
+langchain-core>=0.3.0
+langchain-deepseek>=0.1.0
+langchain-openai>=0.1.0
+
+# Web框架
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.0.0
+
+# 工具库
+python-dotenv>=1.0.1
+requests>=2.31.0
+
+# 开发工具（可选）
+# mypy>=1.11.1
+# ruff>=0.6.1
+# pytest>=8.3.5
+

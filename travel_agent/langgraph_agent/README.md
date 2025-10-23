@@ -1,61 +1,132 @@
-# New LangGraph Project
+# 天气旅行助手 - 后端API
 
-[![CI](https://github.com/langchain-ai/new-langgraph-project/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/langchain-ai/new-langgraph-project/actions/workflows/unit-tests.yml)
-[![Integration Tests](https://github.com/langchain-ai/new-langgraph-project/actions/workflows/integration-tests.yml/badge.svg)](https://github.com/langchain-ai/new-langgraph-project/actions/workflows/integration-tests.yml)
+基于LangGraph和FastAPI的智能旅行助手后端服务。
 
-This template demonstrates a simple application implemented using [LangGraph](https://github.com/langchain-ai/langgraph), designed for showing how to get started with [LangGraph Server](https://langchain-ai.github.io/langgraph/concepts/langgraph_server/#langgraph-server) and using [LangGraph Studio](https://langchain-ai.github.io/langgraph/concepts/langgraph_studio/), a visual debugging IDE.
+## 🚀 快速开始
 
-<div align="center">
-  <img src="./static/studio_ui.png" alt="Graph view in LangGraph studio UI" width="75%" />
-</div>
-
-The core logic defined in `src/agent/graph.py`, showcases an single-step application that responds with a fixed string and the configuration provided.
-
-You can extend this graph to orchestrate more complex agentic workflows that can be visualized and debugged in LangGraph Studio.
-
-## Getting Started
-
-1. Install dependencies, along with the [LangGraph CLI](https://langchain-ai.github.io/langgraph/concepts/langgraph_cli/), which will be used to run the server.
+### 1. 安装依赖
 
 ```bash
-cd path/to/your/app
-pip install -e . "langgraph-cli[inmem]"
+pip install -r requirements.txt
 ```
 
-2. (Optional) Customize the code and project as needed. Create a `.env` file if you need to use secrets.
+### 2. 配置环境变量
+
+创建 `.env` 文件：
+```env
+DEEPSEEK_API_KEY=sk-your-api-key-here
+```
+
+### 3. 启动服务器
 
 ```bash
-cp .env.example .env
+# Windows
+start_server.bat
+
+# Linux/Mac
+./start_server.sh
+
+# 或直接运行
+python api_server.py
 ```
 
-If you want to enable LangSmith tracing, add your LangSmith API key to the `.env` file.
+服务器将在 `http://localhost:8000` 启动
 
-```text
-# .env
-LANGSMITH_API_KEY=lsv2...
+## 📚 API文档
+
+访问 http://localhost:8000/docs 查看完整的API文档（Swagger UI）
+
+### 主要端点
+
+- `POST /chat` - 发送聊天消息
+- `GET /conversations` - 获取对话列表
+- `POST /new-conversation` - 创建新对话
+- `DELETE /conversation/{id}` - 删除对话
+
+### 使用示例
+
+```python
+import requests
+
+response = requests.post(
+    "http://localhost:8000/chat",
+    json={
+        "message": "北京今天天气怎么样？",
+        "conversation_id": "user-001"
+    }
+)
+
+print(response.json())
 ```
 
-3. Start the LangGraph Server.
+## 🛠️ 项目结构
 
-```shell
-langgraph dev
+```
+langgraph_agent/
+├── api_server.py          # FastAPI服务器
+├── requirements.txt       # Python依赖
+├── start_server.bat       # Windows启动脚本
+├── start_server.sh        # Linux/Mac启动脚本
+├── test_connection.py     # 连接测试脚本
+├── src/
+│   ├── agent/
+│   │   ├── graph.py       # 景点推荐工具
+│   │   └── memory.py      # 对话记忆管理
+│   └── tools/
+│       └── get_weather.py # 天气查询工具
+└── .env                   # 环境配置（需创建）
 ```
 
-For more information on getting started with LangGraph Server, [see here](https://langchain-ai.github.io/langgraph/tutorials/langgraph-platform/local-server/).
+## 🧪 测试
 
-## How to customize
+运行测试脚本验证系统是否正常：
 
-1. **Define runtime context**: Modify the `Context` class in the `graph.py` file to expose the arguments you want to configure per assistant. For example, in a chatbot application you may want to define a dynamic system prompt or LLM to use. For more information on runtime context in LangGraph, [see here](https://langchain-ai.github.io/langgraph/agents/context/?h=context#static-runtime-context).
+```bash
+python test_connection.py
+```
 
-2. **Extend the graph**: The core logic of the application is defined in [graph.py](./src/agent/graph.py). You can modify this file to add new nodes, edges, or change the flow of information.
+## 📖 更多文档
 
-## Development
+- [快速启动指南](QUICKSTART.md)
+- [部署指南](DEPLOYMENT.md)
+- [完整文档](../README.md)
 
-While iterating on your graph in LangGraph Studio, you can edit past state and rerun your app from previous states to debug specific nodes. Local changes will be automatically applied via hot reload.
+## 🔧 开发
 
-Follow-up requests extend the same thread. You can create an entirely new thread, clearing previous history, using the `+` button in the top right.
+### 添加新工具
 
-For more advanced features and examples, refer to the [LangGraph documentation](https://langchain-ai.github.io/langgraph/). These resources can help you adapt this template for your specific use case and build more sophisticated conversational agents.
+1. 在 `src/tools/` 创建新文件
+2. 使用 `@tool` 装饰器定义函数
+3. 在 `api_server.py` 导入并添加到tools列表
 
-LangGraph Studio also integrates with [LangSmith](https://smith.langchain.com/) for more in-depth tracing and collaboration with teammates, allowing you to analyze and optimize your chatbot's performance.
+示例：
+```python
+from langchain_core.tools import tool
+from typing import Annotated
+
+@tool('my_tool')
+def my_tool(param: Annotated[str, '参数描述']) -> str:
+    """工具功能描述"""
+    return f"结果: {param}"
+```
+
+### 自定义提示词
+
+修改 `api_server.py` 第65行的prompt参数。
+
+## 📝 技术栈
+
+- **LangGraph** - AI Agent框架
+- **FastAPI** - Web框架
+- **DeepSeek** - 大语言模型
+- **LangChain** - LLM工具链
+
+## ⚙️ 环境要求
+
+- Python >= 3.9
+- DeepSeek API密钥
+
+## 📄 许可证
+
+MIT License
 
