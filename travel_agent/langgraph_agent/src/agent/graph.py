@@ -15,7 +15,11 @@ import requests
 #     extra_body={'chat_template_kwargs': {'enabled_thingking': False}},
 # )
 
-def get_introduction(city: str) -> str:
+from langchain_core.tools import tool
+from typing import Annotated
+
+@tool('get_introduction')
+def get_introduction(city: Annotated[str, '城市名称']) -> str:
     """通过高德地图API查询指定城市的旅游景点"""
     # 修正了字符串闭合问题
     url = f"https://restapi.amap.com/v3/place/text?keywords=景点&region={city}&key=0b3607182ab322a7aad5d6eba763084f"
