@@ -4,7 +4,24 @@ from langchain_deepseek import ChatDeepSeek # DeepSeek 聊天模型
 from langgraph.checkpoint.memory import MemorySaver
 # 只import了get_weather一个函数,对吗?
 # from tools.get_weather import get_weather
-from tools import get_weather
+
+import sys
+import os
+
+# 2. 获取 memory.py 所在的绝对路径
+current_script_path = os.path.abspath(__file__)  # 结果：d:/FZU/.../agent/memory.py
+# 3. 获取 agent/ 目录的路径（当前脚本的父目录）
+agent_dir = os.path.dirname(current_script_path)  # 结果：d:/FZU/.../src/agent
+# 4. 获取 src/ 目录的路径（agent/ 的父目录，即 tools 所在的目录）
+src_dir = os.path.dirname(agent_dir)  # 结果：d:/FZU/.../langgraph_agent/src
+
+# 5. 将 src/ 目录加入 Python 搜索路径
+if src_dir not in sys.path:
+    sys.path.append(src_dir)
+
+# 6. 现在再导入 get_weather（这行就是你原来的第7行，现在放在路径配置之后）
+from tools.get_weather import get_weather
+
 # from graph import get_introduction
 import graph
 
@@ -25,7 +42,7 @@ llm = ChatDeepSeek(model="deepseek-chat", temperature=0)
 agent = create_react_agent(
     llm,
     # tools=[get_weather,get_introduction], # 这边可以添加tools
-    tools=[get_weather.get_weather,graph.get_introduction], # 这边可以添加tools
+    tools=[get_weather,graph.get_introduction], # 这边可以添加tools
     prompt="你是智能旅行手，需要为用户查询旅游目的地的天气并推荐景点",
     checkpointer=memory # 记忆化要用
 )
@@ -54,8 +71,8 @@ def main_work():
     print(resp["messages"][-1].content) # 本地测试用 输出文本
 
 # 测试,确实能记忆上下文
-# while True:
-#     main_work()
+while True:
+    main_work()
 
 """
 这个版本是进程退出,历史记录就消失的版本
