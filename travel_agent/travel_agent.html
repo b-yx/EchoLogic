@@ -1,0 +1,817 @@
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>天气旅行助手</title>
+    <script src="https://res.gemcoder.com/js/reload.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#165DFF',
+              secondary: '#6B7280',
+              light: '#F3F4F6',
+              dark: '#1F2937'
+            },
+            fontFamily: {
+              inter: ['Inter', 'system-ui', 'sans-serif']
+            }
+          }
+        }
+      };
+    </script>
+    <style type="text/tailwindcss">
+      @layer utilities {
+          .content-auto {
+              content-visibility: auto;
+          }
+          .scrollbar-hide {
+              scrollbar-width: none;
+              -ms-overflow-style: none;
+          }
+          .scrollbar-hide::-webkit-scrollbar {
+              display: none;
+          }
+          .text-shadow {
+              text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+          }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 font-inter text-dark min-h-screen flex flex-col">
+    <!-- [MODULE] a7b_页面头部 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+      <div
+        class="container mx-auto px-4 py-3 flex items-center justify-between"
+      >
+        <div
+          class="flex items-center space-x-4"
+          data-ytextravalue="extra-jt0pgl0iq"
+        >
+          <button
+            id="history-btn"
+            class="flex items-center space-x-1 text-sm font-medium text-dark hover:text-primary transition-colors"
+            data-ytoriginindex="0"
+            data-ytindex="0"
+          >
+            <i class="fas fa-history text-lg"> </i>
+            <span class="hidden sm:inline"> 历史对话 </span>
+          </button>
+          <button
+            id="new-chat-btn"
+            class="flex items-center space-x-1 text-sm font-medium text-dark hover:text-primary transition-colors"
+            data-ytoriginindex="1"
+            data-ytindex="1"
+          >
+            <i class="fas fa-plus-circle text-lg"> </i>
+            <span class="hidden sm:inline"> 新对话 </span>
+          </button>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="flex items-center">
+            <span class="font-semibold text-dark hidden sm:inline">
+              EchoLogic
+            </span>
+          </div>
+          <button
+            class="p-2 rounded-full hover:bg-gray-100 transition-colors"
+          ></button>
+        </div>
+      </div>
+    </header>
+    <!-- [/MODULE] a7b_页面头部 -- 包含网站logo、标题和用户设置按钮 -->
+    <!-- [MODULE] z9x_主内容区域 -->
+    <main class="flex-1 container mx-auto px-4 py-6 flex flex-col">
+      <!-- [MODULE] h7d_历史对话页面 -->
+      <div
+        class="hidden flex-1 flex flex-col max-w-4xl mx-auto w-full"
+        id="history-page"
+      >
+        <div class="text-center mb-8 pt-10">
+          <h2 class="text-2xl font-bold text-dark mb-2">历史对话</h2>
+          <p class="text-secondary">查看和管理您的历史对话记录</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div class="divide-y divide-gray-100">
+            <!-- 历史记录为空，初始状态不显示任何历史记录项 -->
+          </div>
+          <!-- 空状态 (默认显示) -->
+          <div class="py-20 text-center" id="empty-history">
+            <div
+              class="w-20 h-20 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4"
+            >
+              <i class="fas fa-inbox text-gray-300 text-2xl"> </i>
+            </div>
+            <h3 class="text-lg font-medium text-dark mb-1">暂无历史对话</h3>
+            <p class="text-secondary max-w-xs mx-auto">
+              开始新的对话，您的历史记录将显示在这里
+            </p>
+          </div>
+        </div>
+      </div>
+      <!-- [/MODULE] h7d_历史对话页面 -- 显示历史对话记录列表，支持删除单条记录 -->
+      <!-- [MODULE] k3j_聊天界面区域 -->
+      <div
+        class="flex-1 flex flex-col max-w-6xl mx-auto w-full"
+        id="chat-interface"
+        data-ytextravalue="extra-9a7joxeri"
+      >
+        <!-- [MODULE] m2p_对话历史区域 -->
+        <div
+          class="flex-1 overflow-y-auto scrollbar-hide p-4 space-y-6 mb-6"
+          id="chat-history"
+          data-ytparentvalue="extra-9a7joxeri"
+          data-ytoriginindex="0"
+          data-ytindex="0"
+        >
+          <!-- 欢迎消息 -->
+          <div class="flex items-start space-x-3">
+            <div
+              class="w-10 h-10 rounded-full bg-primary flex-shrink-0 flex items-center justify-center"
+            >
+              <i class="fas fa-cloud-sun text-white"> </i>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-4 max-w-[85%]">
+              <p class="text-secondary">今天有什么可以帮到您？</p>
+              <p class="text-sm text-gray-400 mt-2">
+                我可以根据天气情况为您推荐最佳旅行方案
+              </p>
+            </div>
+          </div>
+        </div>
+        <!-- [/MODULE] m2p_对话历史区域 -- 显示用户与助手的对话记录 -->
+        <!-- [MODULE] t5g_输入区域 -->
+        <div
+          class="bg-white rounded-xl shadow-sm p-4 mb-6"
+          data-ytoriginindex="1"
+          data-ytindex="1"
+        >
+          <div class="relative">
+            <textarea
+              class="w-full border border-gray-200 rounded-lg p-4 pr-24 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all resize-none min-h-[100px]"
+              id="message-input"
+              placeholder='请输入您的旅行需求，例如："我想去北京旅行，什么时候去最合适？"'
+            >
+            </textarea>
+            <div class="absolute right-3 bottom-3 flex items-center space-x-2">
+              <button
+                class="p-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-secondary voice-btn"
+                id="voice-record-btn"
+                title="点击开始语音输入"
+              >
+                <i class="fas fa-microphone"> </i>
+              </button>
+              <button
+                class="p-3 rounded-full bg-primary hover:bg-primary/90 transition-colors text-white"
+                id="send-btn"
+              >
+                <i class="fas fa-paper-plane"> </i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- [/MODULE] t5g_输入区域 -- 包含文字输入框、语音录制按钮和发送按钮，以及快捷选择按钮 -->
+      </div>
+      <!-- [/MODULE] k3j_聊天界面区域 -- 包含对话历史和输入区域 -->
+    </main>
+    <!-- [/MODULE] z9x_主内容区域 -- 包含聊天界面区域 -->
+    <!-- [MODULE] b8n_页脚区域 -->
+    <footer class="bg-white py-4 border-t border-gray-200">
+      <div class="container mx-auto px-4 text-center text-sm text-gray-500">
+        <p>天气旅行助手 | 您的智能旅行规划伙伴</p>
+      </div>
+    </footer>
+    <!-- [/MODULE] b8n_页脚区域 -- 包含版权信息 -->
+    <!-- [MODULE] v7d_加载中模态框 -->
+    <div
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden"
+      id="loading-modal"
+    >
+      <div class="bg-white rounded-xl p-6 max-w-md w-full text-center">
+        <div
+          class="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"
+        ></div>
+        <h3 class="text-lg font-semibold mb-2">正在为您生成旅行方案</h3>
+        <p class="text-gray-500">请稍候，我们正在分析天气和景点信息...</p>
+      </div>
+    </div>
+    <!-- [/MODULE] v7d_加载中模态框 -- 当系统处理请求时显示加载状态 -->
+    <!-- [MODULE] s4f_语音录制提示 -->
+    <div
+      class="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-primary text-white px-6 py-3 rounded-full shadow-lg flex items-center space-x-2 hidden"
+      id="recording-indicator"
+    >
+      <div class="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+      <span> 正在录音... </span>
+      <span class="text-sm opacity-80"> (点击停止) </span>
+    </div>
+    <!-- [/MODULE] s4f_语音录制提示 -- 显示语音录制状态 -->
+    <!-- [JSMOD] e2d_聊天功能 -->
+    <script id="chat-script">
+      document.addEventListener('DOMContentLoaded', function () {
+        // DOM元素
+        var chatHistory = document.getElementById('chat-history');
+        var messageInput = document.getElementById('message-input');
+        var sendBtn = document.getElementById('send-btn');
+        var voiceRecordBtn = document.getElementById('voice-record-btn');
+        var loadingModal = document.getElementById('loading-modal');
+        var recordingIndicator = document.getElementById('recording-indicator');
+
+        // 语音播报状态管理
+        var speechSynthesis = window.speechSynthesis;
+        var currentUtterance = null;
+        var isSpeaking = false;
+        var currentSpeechText = '';
+        var lastClickTime = 0;
+
+        // 语音识别状态
+        var isRecording = false;
+        var recognition = null;
+        var microphonePermissionGranted = false;
+
+        // 初始化语音识别
+        function initializeSpeechRecognition() {
+          if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            console.warn('此浏览器不支持语音识别API');
+            voiceRecordBtn.disabled = true;
+            voiceRecordBtn.title = '您的浏览器不支持语音输入';
+            voiceRecordBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            return false;
+          }
+          
+          var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+          recognition = new SpeechRecognition();
+          recognition.continuous = false;
+          recognition.interimResults = false;
+          recognition.lang = 'zh-CN';
+          recognition.maxAlternatives = 1;
+          
+          recognition.onstart = function() {
+            console.log('语音识别开始');
+            isRecording = true;
+            voiceRecordBtn.classList.remove('bg-gray-100', 'text-secondary');
+            voiceRecordBtn.classList.add('bg-red-500', 'text-white');
+            recordingIndicator.classList.remove('hidden');
+            voiceRecordBtn.title = '点击停止录音';
+          };
+          
+          recognition.onresult = function(event) {
+            var transcript = event.results[0][0].transcript;
+            console.log('识别结果:', transcript);
+            messageInput.value = transcript;
+            messageInput.focus();
+          };
+          
+          recognition.onerror = function(event) {
+            console.error('语音识别错误:', event.error);
+            stopRecording();
+            
+            if (event.error === 'not-allowed') {
+              microphonePermissionGranted = false;
+              alert('麦克风权限被拒绝。请刷新页面并允许使用麦克风，或使用文字输入。');
+            } else if (event.error === 'no-speech') {
+              alert('没有检测到语音，请重试。');
+            } else {
+              alert('语音识别失败: ' + event.error + '，请重试或使用文字输入。');
+            }
+          };
+          
+          recognition.onend = function() {
+            console.log('语音识别结束');
+            stopRecording();
+          };
+          
+          return true;
+        }
+
+        // 请求麦克风权限
+        function requestMicrophonePermission() {
+          return new Promise(function(resolve, reject) {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+              reject(new Error('您的浏览器不支持录音功能'));
+              return;
+            }
+            
+            navigator.mediaDevices.getUserMedia({ audio: true })
+              .then(function(stream) {
+                // 权限已授予，立即停止所有轨道（我们只需要权限，不需要实际流）
+                stream.getTracks().forEach(function(track) { track.stop(); });
+                microphonePermissionGranted = true;
+                resolve(true);
+              })
+              .catch(function(error) {
+                console.error('麦克风权限错误:', error);
+                microphonePermissionGranted = false;
+                reject(error);
+              });
+          });
+        }
+
+        // 开始录音
+        function startRecording() {
+          if (isRecording) {
+            stopRecording();
+            return;
+          }
+          
+          // 如果还没有初始化语音识别，先初始化
+          if (!recognition) {
+            if (!initializeSpeechRecognition()) {
+              return;
+            }
+          }
+          
+          // 检查麦克风权限
+          if (!microphonePermissionGranted) {
+            loadingModal.classList.remove('hidden');
+            
+            requestMicrophonePermission()
+              .then(function() {
+                loadingModal.classList.add('hidden');
+                // 权限已获得，开始录音
+                recognition.start();
+              })
+              .catch(function(error) {
+                loadingModal.classList.add('hidden');
+                console.error('麦克风权限请求失败:', error);
+                alert('无法访问麦克风。请确保已授予麦克风权限并刷新页面。');
+              });
+          } else {
+            // 已经有权限，直接开始录音
+            recognition.start();
+          }
+        }
+
+        // 停止录音
+        function stopRecording() {
+          if (!isRecording) return;
+          
+          isRecording = false;
+          voiceRecordBtn.classList.remove('bg-red-500', 'text-white');
+          voiceRecordBtn.classList.add('bg-gray-100', 'text-secondary');
+          recordingIndicator.classList.add('hidden');
+          voiceRecordBtn.title = '点击开始语音输入';
+          
+          if (recognition) {
+            recognition.stop();
+          }
+        }
+
+        // 发送消息
+        function sendMessage() {
+          var message = messageInput.value.trim();
+          if (!message) {
+            alert('请输入消息内容');
+            return;
+          }
+
+          // 添加用户消息到聊天历史
+          addUserMessage(message);
+
+          // 清空输入框
+          messageInput.value = '';
+
+          // 显示加载状态
+          loadingModal.classList.remove('hidden');
+
+          // 调用真实API（支持自定义后端地址）
+          var API_BASE = window.CHAT_API_BASE || 'http://localhost:8000';
+          sendBtn.disabled = true;
+          fetch(API_BASE + '/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              message: message,
+              conversation_id: 'travel-assistant'
+            })
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('网络请求失败: ' + response.status);
+            }
+            return response.json();
+          })
+          .then(data => {
+            // 隐藏加载状态
+            loadingModal.classList.add('hidden');
+            sendBtn.disabled = false;
+
+            // 添加助手回复
+            addAssistantResponse(data);
+
+            // 滚动到底部
+            scrollToBottom();
+          })
+          .catch(error => {
+            // 隐藏加载状态
+            loadingModal.classList.add('hidden');
+            sendBtn.disabled = false;
+
+            console.error('API请求错误:', error);
+
+            // 添加错误回复
+            var errorResponse = {
+              type: "error",
+              message: "网络连接异常，无法获取旅行方案",
+              detail: "请检查后端服务是否启动，或稍后重试。错误信息: " + error.message
+            };
+
+            addAssistantResponse(errorResponse);
+            scrollToBottom();
+          });
+        }
+
+        // 添加用户消息
+        function addUserMessage(message) {
+          var userMessageHTML = '<div class="flex items-start justify-end space-x-3">' +
+                        '<div class="bg-primary/10 rounded-xl p-4 max-w-[85%]">' +
+                            '<p class="text-dark">' + message + '</p>' +
+                        '</div>' +
+                        '<div class="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center">' +
+                            '<i class="fas fa-user text-secondary"></i>' +
+                        '</div>' +
+                    '</div>';
+          chatHistory.insertAdjacentHTML('beforeend', userMessageHTML);
+          scrollToBottom();
+        }
+
+        // 添加助手回复
+        function addAssistantResponse(response) {
+          var speechText = "";
+          var responseId = "response-" + Date.now(); // 为每个回复生成唯一ID
+
+          if (response.type === "error") {
+            speechText = response.message + "。" + response.detail;
+            var assistantResponseHTML = '<div class="flex items-start space-x-3" id="' + responseId + '">' +
+                        '<div class="w-10 h-10 rounded-full bg-primary flex-shrink-0 flex items-center justify-center">' +
+                            '<i class="fas fa-cloud-sun text-white"></i>' +
+                        '</div>' +
+                        '<div class="bg-white rounded-xl shadow-sm p-4 max-w-[85%] cursor-pointer response-content" data-speech="' + encodeURIComponent(speechText) + '" data-response-id="' + responseId + '">' +
+                            '<div class="flex items-center text-yellow-600 mb-2">' +
+                                '<i class="fas fa-exclamation-triangle mr-2"></i>' +
+                                '<h3 class="text-lg font-semibold">' + response.message + '</h3>' +
+                            '</div>' +
+                            '<p class="text-gray-600">' + response.detail + '</p>' +
+                            '<div class="mt-3 text-right">' +
+                                '<button class="text-primary hover:text-primary/80 transition-colors speak-button inline-flex items-center" data-speech="' + encodeURIComponent(speechText) + '" data-response-id="' + responseId + '">' +
+                                    '<i class="fas fa-volume-up mr-1"></i>' +
+                                    '<span>语音播报</span>' +
+                                '</button>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+          } else {
+            // 正常回复 - 使用API返回的实际消息内容
+            speechText = response.message;
+            var assistantResponseHTML = '<div class="flex items-start space-x-3" id="' + responseId + '">' +
+                        '<div class="w-10 h-10 rounded-full bg-primary flex-shrink-0 flex items-center justify-center">' +
+                            '<i class="fas fa-cloud-sun text-white"></i>' +
+                        '</div>' +
+                        '<div class="bg-white rounded-xl shadow-sm p-4 max-w-[85%] cursor-pointer response-content" data-speech="' + encodeURIComponent(speechText) + '" data-response-id="' + responseId + '">' +
+                            '<p class="text-secondary">' + response.message + '</p>' +
+                            (response.weather_data ? '<div class="mt-2 text-sm text-blue-600"><i class="fas fa-cloud-sun mr-1"></i>包含实时天气信息</div>' : '') +
+                            '<div class="mt-3 text-right">' +
+                                '<button class="text-primary hover:text-primary/80 transition-colors speak-button inline-flex items-center" data-speech="' + encodeURIComponent(speechText) + '" data-response-id="' + responseId + '">' +
+                                    '<i class="fas fa-volume-up mr-1"></i>' +
+                                    '<span>语音播报</span>' +
+                                '</button>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+          }
+
+          chatHistory.insertAdjacentHTML('beforeend', assistantResponseHTML);
+
+          // 为新添加的回答绑定语音播报功能
+          var newResponse = document.getElementById(responseId);
+          if (newResponse) {
+            var speakButton = newResponse.querySelector('.speak-button');
+            var responseContent = newResponse.querySelector('.response-content');
+
+            if (speakButton) {
+              speakButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var text = decodeURIComponent(this.getAttribute('data-speech'));
+                handleSpeechInteraction(text, this);
+              });
+            }
+
+            if (responseContent) {
+              responseContent.addEventListener('click', function(e) {
+                // 防止点击语音按钮时触发内容区域的播报
+                if (e.target.closest('.speak-button')) return;
+                var text = decodeURIComponent(this.getAttribute('data-speech'));
+                var speakButton = this.querySelector('.speak-button');
+                handleSpeechInteraction(text, speakButton);
+              });
+            }
+          }
+        }
+        
+        // 处理语音交互
+        function handleSpeechInteraction(text, buttonElement) {
+          var currentTime = new Date().getTime();
+          var timeDiff = currentTime - lastClickTime;
+          
+          // 双击判断（300ms内两次点击）
+          if (timeDiff < 300 && currentSpeechText === text) {
+            // 双击 - 从头播放
+            if (isSpeaking) {
+              speechSynthesis.cancel();
+            }
+            speakText(text, buttonElement);
+            lastClickTime = 0; // 重置
+          } else {
+            // 单击
+            if (isSpeaking && currentSpeechText === text) {
+              // 正在播放同一文本 - 暂停
+              speechSynthesis.pause();
+              isSpeaking = false;
+              // 更新按钮状态
+              updateSpeechButtonState(false, buttonElement);
+            } else if (speechSynthesis.paused && currentSpeechText === text) {
+              // 已暂停同一文本 - 恢复
+              speechSynthesis.resume();
+              isSpeaking = true;
+              // 更新按钮状态
+              updateSpeechButtonState(true, buttonElement);
+            } else {
+              // 播放新文本或不同文本
+              if (isSpeaking) {
+                speechSynthesis.cancel();
+              }
+              speakText(text, buttonElement);
+            }
+            lastClickTime = currentTime;
+          }
+        }
+        
+        // 更新语音按钮状态
+        function updateSpeechButtonState(playing, buttonElement) {
+          if (!buttonElement) return;
+          var icon = buttonElement.querySelector('i');
+          var span = buttonElement.querySelector('span');
+          if (playing) {
+            icon.className = 'fas fa-pause mr-1';
+            if (span) span.textContent = '暂停播报';
+          } else {
+            icon.className = 'fas fa-volume-up mr-1';
+            if (span) span.textContent = '语音播报';
+          }
+        }
+        
+        // 文字转语音函数
+        function speakText(text, buttonElement) {
+          if ('speechSynthesis' in window) {
+            // 停止当前正在播放的语音
+            speechSynthesis.cancel();
+            
+            currentUtterance = new SpeechSynthesisUtterance(text);
+            currentUtterance.lang = 'zh-CN';
+            currentUtterance.rate = 0.9;
+            currentUtterance.pitch = 1.0;
+            currentUtterance.volume = 1.0;
+            
+            // 获取中文语音
+            var voices = speechSynthesis.getVoices();
+            var chineseVoice = voices.find(function(voice) {
+              return voice.lang.includes('zh-CN') || voice.lang.includes('zh_CN');
+            });
+            
+            if (chineseVoice) {
+              currentUtterance.voice = chineseVoice;
+            }
+            
+            // 播放状态管理
+            currentUtterance.onstart = function() {
+              isSpeaking = true;
+              currentSpeechText = text;
+              updateSpeechButtonState(true, buttonElement);
+            };
+            
+            currentUtterance.onend = function() {
+              isSpeaking = false;
+              currentSpeechText = '';
+              currentUtterance = null;
+              updateSpeechButtonState(false, buttonElement);
+              // 重置所有语音按钮状态
+              document.querySelectorAll('.speak-button i').forEach(function(icon) {
+                icon.className = 'fas fa-volume-up mr-1';
+              });
+              document.querySelectorAll('.speak-button span').forEach(function(span) {
+                span.textContent = '语音播报';
+              });
+            };
+            
+            currentUtterance.onerror = function() {
+              isSpeaking = false;
+              currentSpeechText = '';
+              currentUtterance = null;
+              updateSpeechButtonState(false, buttonElement);
+              // 重置所有语音按钮状态
+              document.querySelectorAll('.speak-button i').forEach(function(icon) {
+                icon.className = 'fas fa-volume-up mr-1';
+              });
+              document.querySelectorAll('.speak-button span').forEach(function(span) {
+                span.textContent = '语音播报';
+              });
+              alert('语音播报出错，请重试');
+            };
+            
+            // 播放新语音
+            speechSynthesis.speak(currentUtterance);
+          } else {
+            alert('您的浏览器不支持语音合成功能，请使用Chrome、Edge或Safari浏览器');
+          }
+        }
+
+        // 滚动到底部
+        function scrollToBottom() {
+          chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        // 事件监听
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+          }
+        });
+
+        // 语音按钮事件监听 - 使用点击而不是按下/松开
+        voiceRecordBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          if (isRecording) {
+            stopRecording();
+          } else {
+            startRecording();
+          }
+        });
+
+        // 初始化语音识别
+        initializeSpeechRecognition();
+        
+        // 初始化语音合成可用性检查
+        if (!('speechSynthesis' in window)) {
+          console.warn('此浏览器不支持语音合成API');
+        }
+      });
+    </script>
+    <!-- [/JSMOD] e2d_聊天功能 -- 处理消息发送、语音录制、显示对话历史和生成旅行方案 -->
+  </body>
+  <!-- [JSMOD] 7f2_页面切换逻辑 -->
+  <script id="page-switch-script">
+    document.addEventListener('DOMContentLoaded', function () {
+      // 获取DOM元素
+      var historyBtn = document.getElementById('history-btn');
+      var newChatBtn = document.getElementById('new-chat-btn');
+      var chatInterface = document.getElementById('chat-interface');
+      var historyPage = document.getElementById('history-page');
+      var deleteButtons = document.querySelectorAll('.delete-history');
+      var emptyHistory = document.getElementById('empty-history');
+      var historyItemsContainer = document.querySelector('#history-page .divide-y');
+
+      // 初始化页面状态
+      showChatInterface();
+
+      // 页面切换函数
+      function showChatInterface() {
+        chatInterface.classList.remove('hidden');
+        historyPage.classList.add('hidden');
+      }
+      function showHistoryPage() {
+        chatInterface.classList.add('hidden');
+        historyPage.classList.remove('hidden');
+        checkHistoryEmpty();
+      }
+
+      // 检查历史记录是否为空
+      function checkHistoryEmpty() {
+        var visibleItems = document.querySelectorAll('#history-page .divide-y > div:not(.hidden)');
+        if (visibleItems.length > 0) {
+          emptyHistory.classList.add('hidden');
+          historyItemsContainer.classList.remove('hidden');
+        } else {
+          emptyHistory.classList.remove('hidden');
+          historyItemsContainer.classList.add('hidden');
+        }
+      }
+
+      // 绑定事件监听器
+      historyBtn.addEventListener('click', showHistoryPage);
+      
+      // 新对话按钮功能增强
+      newChatBtn.addEventListener('click', function() {
+        // 获取当前对话内容
+        var currentChat = document.getElementById('chat-history');
+        
+        // 如果当前有对话内容（不只是欢迎消息）
+        if (currentChat.children.length > 1) {
+          // 获取第一条用户消息作为对话标题
+          var userMessages = currentChat.querySelectorAll('.flex.items-start.justify-end');
+          if (userMessages.length > 0) {
+            var firstUserMessage = userMessages[0].querySelector('p').textContent;
+            var chatTitle = firstUserMessage.length > 30 ? firstUserMessage.substring(0, 30) + '...' : firstUserMessage;
+            
+            // 创建新的历史记录项
+            var newHistoryItem = document.createElement('div');
+            newHistoryItem.className = 'flex items-center justify-between p-4 hover:bg-gray-50 transition-colors';
+            newHistoryItem.innerHTML = `
+              <div class="flex items-start space-x-3">
+                <div class="w-8 h-8 rounded-full bg-primary/10 flex-shrink-0 flex items-center justify-center mt-0.5">
+                  <i class="fas fa-comment text-primary text-sm"></i>
+                </div>
+                <div>
+                  <p class="font-medium text-dark line-clamp-1">${chatTitle}</p>
+                  <p class="text-sm text-gray-400 mt-1 line-clamp-1">${firstUserMessage}</p>
+                </div>
+              </div>
+              <button class="delete-history p-2 rounded-full hover:bg-gray-100 text-secondary transition-colors">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            `;
+            
+            // 为新添加的删除按钮绑定事件
+            var deleteBtn = newHistoryItem.querySelector('.delete-history');
+            deleteBtn.addEventListener('click', function(e) {
+              e.stopPropagation();
+              var historyItem = this.closest('.flex.items-center.justify-between');
+              if (historyItem) {
+                historyItem.classList.add('opacity-0', 'transform', 'translate-x-full');
+                historyItem.style.transition = 'all 0.3s ease-out';
+                setTimeout(function() {
+                  historyItem.classList.add('hidden');
+                  checkHistoryEmpty();
+                }, 300);
+              }
+            });
+            
+            // 为新添加的历史记录项绑定点击事件
+            newHistoryItem.addEventListener('click', function(e) {
+              if (e.target.closest('.delete-history')) return;
+              showChatInterface();
+              // 这里应该加载该历史对话的完整内容
+              document.getElementById('chat-history').innerHTML = '<div class="flex items-start space-x-3"><div class="w-10 h-10 rounded-full bg-primary flex-shrink-0 flex items-center justify-center"><i class="fas fa-cloud-sun text-white"></i></div><div class="bg-white rounded-xl shadow-sm p-4 max-w-[85%]"><p class="text-secondary">已恢复历史对话。</p></div></div>';
+            });
+            
+            // 添加到历史记录列表
+            historyItemsContainer.insertBefore(newHistoryItem, historyItemsContainer.firstChild);
+            
+            // 确保空状态提示被隐藏
+            emptyHistory.classList.add('hidden');
+          }
+        }
+        
+        // 清空当前对话，只保留欢迎消息
+        currentChat.innerHTML = '<div class="flex items-start space-x-3"><div class="w-10 h-10 rounded-full bg-primary flex-shrink-0 flex items-center justify-center"><i class="fas fa-cloud-sun text-white"></i></div><div class="bg-white rounded-xl shadow-sm p-4 max-w-[85%]"><p class="text-secondary">今天有什么可以帮到您？</p><p class="text-sm text-gray-400 mt-2">我可以根据天气情况为您推荐最佳旅行方案</p></div></div>';
+        
+        // 清空输入框
+        document.getElementById('message-input').value = '';
+        
+        // 显示聊天界面
+        showChatInterface();
+      });
+
+      // 绑定删除历史记录事件
+      deleteButtons.forEach(function (button) {
+        button.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var historyItem = this.closest('.flex.items-center.justify-between');
+          if (historyItem) {
+            // 添加删除动画
+            historyItem.classList.add('opacity-0', 'transform', 'translate-x-full');
+            historyItem.style.transition = 'all 0.3s ease-out';
+
+            // 动画结束后隐藏元素
+            setTimeout(function () {
+              historyItem.classList.add('hidden');
+              checkHistoryEmpty();
+            }, 300);
+          }
+        });
+      });
+
+      // 点击历史记录项，恢复该对话
+      var historyItems = document.querySelectorAll('#history-page .divide-y > div');
+      historyItems.forEach(function (item) {
+        item.addEventListener('click', function (e) {
+          // 如果点击的是删除按钮，则不触发恢复对话
+          if (e.target.closest('.delete-history')) return;
+          showChatInterface();
+          // 在实际应用中，这里应该加载该历史对话的完整内容
+          // 这里仅做演示，清空当前对话
+          document.getElementById('chat-history').innerHTML = '<div class="flex items-start space-x-3"><div class="w-10 h-10 rounded-full bg-primary flex-shrink-0 flex items-center justify-center"><i class="fas fa-cloud-sun text-white"></i></div><div class="bg-white rounded-xl shadow-sm p-4 max-w-[85%]"><p class="text-secondary">已恢复历史对话。</p></div></div>';
+        });
+      });
+    });
+  </script>
+</html>
