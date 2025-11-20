@@ -380,8 +380,10 @@
           // 显示加载状态
           loadingModal.classList.remove('hidden');
 
-          // 调用真实API
-          fetch('http://localhost:8000/chat', {
+          // 调用真实API（支持自定义后端地址）
+          var API_BASE = window.CHAT_API_BASE || 'http://localhost:8000';
+          sendBtn.disabled = true;
+          fetch(API_BASE + '/chat', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -400,6 +402,7 @@
           .then(data => {
             // 隐藏加载状态
             loadingModal.classList.add('hidden');
+            sendBtn.disabled = false;
 
             // 添加助手回复
             addAssistantResponse(data);
@@ -410,6 +413,7 @@
           .catch(error => {
             // 隐藏加载状态
             loadingModal.classList.add('hidden');
+            sendBtn.disabled = false;
 
             console.error('API请求错误:', error);
 

@@ -40,6 +40,7 @@ travel_agent/
 - DeepSeek API密钥 ([获取地址](https://platform.deepseek.com/))
 
 **推荐:**
+
 - 使用虚拟环境
 
 ### 2️⃣ 安装依赖
@@ -78,6 +79,7 @@ python api_server.py
 ```
 
 服务器启动后，你将看到：
+
 ```
 🚀 启动天气旅行助手API服务器...
 📍 访问地址: http://localhost:8000
@@ -89,6 +91,7 @@ python api_server.py
 在浏览器中打开 `travel_agent.html` 文件即可使用！
 
 推荐使用：
+
 - Google Chrome
 - Microsoft Edge
 - Safari
@@ -110,6 +113,7 @@ python api_server.py
 后端提供以下API接口：
 
 **POST /chat** - 发送聊天消息
+
 ```json
 {
   "message": "我想去北京旅行",
@@ -128,17 +132,20 @@ python api_server.py
 ## 🛠️ 技术栈
 
 **后端:**
+
 - [LangGraph](https://github.com/langchain-ai/langgraph) - AI Agent框架
 - [FastAPI](https://fastapi.tiangolo.com/) - Web框架
 - [DeepSeek](https://platform.deepseek.com/) - AI模型
 - [LangChain](https://langchain.com/) - LLM工具链
 
 **前端:**
+
 - HTML5 + JavaScript
 - [Tailwind CSS](https://tailwindcss.com/) - UI框架
 - Web Speech API - 语音识别和合成
 
 **外部API:**
+
 - [wttr.in](https://wttr.in/) - 天气查询
 - [高德地图](https://lbs.amap.com/) - 景点推荐
 
@@ -151,6 +158,7 @@ python api_server.py
 3. 在 `api_server.py` 中导入并添加到agent的tools列表
 
 示例：
+
 ```python
 from langchain_core.tools import tool
 
@@ -163,6 +171,7 @@ def my_new_tool(param: str) -> str:
 ### 自定义提示词
 
 修改 `api_server.py` 中的 `prompt` 参数：
+
 ```python
 agent = create_react_agent(
     llm,
