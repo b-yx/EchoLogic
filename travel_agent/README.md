@@ -36,7 +36,7 @@ travel_agent/
 ### 1️⃣ 环境准备
 
 **必需条件:**
-- Python 3.9 或更高版本
+- Python 3.11 或更高版本
 - DeepSeek API密钥 ([获取地址](https://platform.deepseek.com/))
 
 **推荐:**
@@ -54,8 +54,6 @@ python -m venv venv
 # 激活虚拟环境
 # Windows:
 venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
 
 # 安装依赖
 pip install -r requirements.txt
@@ -72,22 +70,7 @@ DEEPSEEK_API_KEY=your_deepseek_api_key_here
 
 ### 4️⃣ 启动后端服务
 
-**方式一：使用启动脚本（推荐）**
-
-Windows:
-```cmd
-cd langgraph_agent
-start_server.bat
-```
-
-Linux/Mac:
-```bash
-cd langgraph_agent
-chmod +x start_server.sh
-./start_server.sh
-```
-
-**方式二：直接运行**
+直接运行
 
 ```bash
 cd langgraph_agent
@@ -201,14 +184,6 @@ A: 语音功能需要使用Chrome/Edge/Safari浏览器，且需要HTTPS或localh
 
 **Q: 天气查询失败**
 A: 检查网络连接，确保可以访问 wttr.in API
-
-## 📝 开发计划
-
-- [ ] 持久化对话历史（数据库存储）
-- [ ] 支持更多旅游工具（酒店、机票查询等）
-- [ ] 用户认证和权限管理
-- [ ] 多语言支持
-- [ ] 移动端优化
 
 ## 📄 许可证
 
