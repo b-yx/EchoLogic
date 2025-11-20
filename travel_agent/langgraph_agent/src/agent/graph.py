@@ -21,21 +21,18 @@ from typing import Annotated
 @tool('get_introduction')
 def get_introduction(city: Annotated[str, '城市名称']) -> str:
     """通过高德地图API查询指定城市的旅游景点"""
-    # 修正了字符串闭合问题
     url = f"https://restapi.amap.com/v3/place/text?keywords=景点&region={city}&key=0b3607182ab322a7aad5d6eba763084f"
     try:
         response = requests.get(url)
         response.raise_for_status()
         data = response.json()
 
-        # 添加数据检查
         if "pois" not in data or not data["pois"]:
             return f"未找到{city}的景点信息"
 
         pois = data["pois"][0]
         introduction_address = pois.get("address", "未知地址")
         
-        # 安全地获取嵌套数据
         biz_ext = pois.get("biz_ext", [{}])
         if isinstance(biz_ext, list) and biz_ext:
             in_rating = biz_ext[0].get("rating", "无评分")
