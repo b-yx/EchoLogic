@@ -1,0 +1,11 @@
+# 前端项目忽略规则
+node_modules/          # 忽略所有 node_modules 目录
+dist/                  # 忽略前端构建产物（如 Vue/React 打包后的 dist）
+.env                   # 忽略环境变量文件（可能包含敏感信息）
+.DS_Store              # macOS 系统文件
+*.log                  # 忽略日志文件
+
+# Spring Boot 项目忽略规则（如果你的项目包含后端）
+target/                # 忽略 Maven/Gradle 构建产物
+*.iml                  # IDEA 项目文件
+.idea/                 # IDEA 配置目录

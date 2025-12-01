@@ -1,0 +1,29 @@
+/* src/assets/main.css */
+
+/* 🟢 通用卡片样式 (可以在 HomeView 或 Recording 页面复用) */
+.custom-card {
+  background-color: #fff;
+  border-radius: 8px;
+  border: 1px solid #e4e7ed;
+  padding: 16px;
+  transition: all 0.3s;
+}
+
+.custom-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 🟢 可以在 Recording 页面用的输入框样式 */
+.editable-area {
+  width: 100%;
+  min-height: 4rem;
+  padding: 0.5rem;
+  outline: none;
+  border-bottom: 1px solid #eee;
+}
+
+.editable-area:empty:before {
+  content: attr(placeholder);
+  color: #9ca3af;
+  pointer-events: none;
+}
