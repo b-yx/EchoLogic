@@ -1,6 +1,6 @@
 <template>
   <div class="records-view">
-    <!-- 工具栏 -->
+    <!-- 工具栏 (保持不变) -->
     <el-card class="toolbar">
       <template #header>
         <div class="toolbar-header">
@@ -12,7 +12,6 @@
         </div>
       </template>
       <div class="toolbar-content">
-        <!-- 🟢 搜索改为按下回车或点击清除时触发，避免频繁请求 -->
         <el-input
           v-model="searchKeyword"
           placeholder="输入关键词并回车..."
@@ -26,7 +25,6 @@
           </template>
         </el-input>
 
-        <!--类型筛选-->
         <el-select 
           v-model="filterType" 
           placeholder="所有类型" 
@@ -44,17 +42,15 @@
       </div>
     </el-card>
 
-    <!-- 列表 -->
+    <!-- 列表 (保持不变) -->
     <el-card class="records-list">
       <el-table :data="records" style="width: 100%" v-loading="loading" stripe>
         <el-table-column label="ID" width="100" type="index" :index="indexMethod" />
         <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
         
-        <!-- 标签列 -->
         <el-table-column label="标签" width="200">
           <template #default="{ row }">
             <div class="tags-wrapper">
-              <!-- 后端返回的 tags 数组 -->
               <el-tag 
                 v-for="tag in row.tags" 
                 :key="tag.id" 
@@ -101,6 +97,24 @@
           <el-input v-model="newRecord.title" placeholder="请输入标题" />
         </el-form-item>
 
+        <!-- ✨✨✨ 新增：选择所属集合 ✨✨✨ -->
+        <el-form-item label="所属集合" required>
+          <el-select 
+            v-model="newRecord.collectionId" 
+            placeholder="请选择所属集合" 
+            style="width: 100%"
+            filterable
+          >
+            <el-option
+              v-for="item in collectionOptions"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
+        <!-- ✨✨✨ 结束 ✨✨✨ -->
+
         <el-form-item label="关联标签">
           <el-select 
             v-model="newRecord.tagIds" 
@@ -108,7 +122,6 @@
             placeholder="请选择标签"
             style="width: 100%"
           >
-            <!-- 注意：这里暂时使用本地 options，如果有 tagsApi，应该在 onMounted 里获取 -->
             <el-option
               v-for="item in tagOptions"
               :key="item.id"
@@ -146,7 +159,7 @@
       </template>
     </el-dialog>
 
-    <!-- 查看详情弹窗 -->
+    <!-- 查看详情弹窗 (保持不变) -->
     <el-dialog v-model="viewDialogVisible" title="记录详情" width="600px">
       <el-descriptions border :column="1">
         <el-descriptions-item label="标题">
@@ -167,8 +180,10 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
-// 🟢 1. 引入你的 API 文件
 import recordsApi from '@/api/records'
+import tagsApi from '@/api/tags'
+// ✨✨✨ 1. 引入 Collections API ✨✨✨
+import collectionsApi from '@/api/collections'
 
 // 状态定义
 const records = ref([])
@@ -180,27 +195,23 @@ const creating = ref(false)
 const viewDialogVisible = ref(false)
 const currentRecord = ref({})
 
-// 暂时硬编码的标签选项（真实项目应该调用 tagsApi.getAllTags()）
-const tagOptions = ref([
-  { id: 1, name: '工作', color: '#409EFF' },
-  { id: 2, name: '生活', color: '#67C23A' },
-  { id: 3, name: '学习', color: '#E6A23C' }
-])
+const tagOptions = ref([])
+// ✨✨✨ 2. 定义集合列表状态 ✨✨✨
+const collectionOptions = ref([])
 
 const newRecord = ref({
   title: '',
   contentType: 'TEXT',
   content: '',
-  tagIds: []
+  tagIds: [],
+  collectionId: null // ✨✨✨ 3. 初始化 collectionId
 })
 
-// 辅助函数
 const getContentTypeLabel = (type) => {
   const map = { TEXT: '文本', LINK: '链接', IMAGE: '图片' }
   return map[type] || type
 }
 
-// 序号计算函数 - 从1开始
 const indexMethod = (index) => {
   return index + 1
 }
@@ -209,19 +220,34 @@ const getContentTypeTag = (type) => {
   return map[type] || ''
 }
 
-// === 🟢 核心逻辑：全部替换为 API 调用 ===
+// 加载标签
+const loadTags = async () => {
+  try {
+    const data = await tagsApi.getAllTags()
+    tagOptions.value = data 
+  } catch (error) {
+    console.error('加载标签列表失败:', error)
+  }
+}
 
-// 1. 加载数据
+// ✨✨✨ 4. 新增：加载所有集合 ✨✨✨
+const loadCollections = async () => {
+  try {
+    // 假设你的 collectionsApi 有 getAllCollections 方法
+    const data = await collectionsApi.getAllCollections()
+    collectionOptions.value = data
+  } catch (error) {
+    console.error('加载集合列表失败:', error)
+    ElMessage.warning('无法加载集合列表')
+  }
+}
+
+// 加载记录
 const loadRecords = async () => {
   loading.value = true
   try {
-    console.log('开始获取记录数据...')
-    // 调用 getAllRecords，http.js 会处理 baseURL
     const data = await recordsApi.getAllRecords()
-    console.log('获取记录数据成功:', data)
-    // 假设后端直接返回数组，如果后端返回 { code: 200, data: [...] }，这里要改成 data.data
     records.value = data 
-    console.log('记录数据已更新:', records.value)
   } catch (error) {
     console.error('获取记录数据失败:', error)
     ElMessage.error('无法连接到服务器')
@@ -230,7 +256,7 @@ const loadRecords = async () => {
   }
 }
 
-// 2. 搜索
+// 搜索
 const handleSearch = async () => {
   if (!searchKeyword.value) {
     loadRecords()
@@ -238,7 +264,6 @@ const handleSearch = async () => {
   }
   loading.value = true
   try {
-    // 调用 records.js 里的 searchRecords
     const data = await recordsApi.searchRecords(searchKeyword.value)
     records.value = data
   } catch (error) {
@@ -248,26 +273,30 @@ const handleSearch = async () => {
   }
 }
 
-// 3. 创建记录
+// ✨✨✨ 5. 修改创建逻辑：不再依赖 collection.value ✨✨✨
 const createRecord = async () => {
   if (!newRecord.value.title.trim()) return ElMessage.warning('请输入标题')
+  
+  // 校验是否选择了集合
+  if (!newRecord.value.collectionId) {
+    return ElMessage.warning('请选择该记录所属的集合')
+  }
 
   creating.value = true
   try {
-    // 构造发送给后端的数据
     const payload = {
       title: newRecord.value.title,
       contentType: newRecord.value.contentType,
       content: newRecord.value.content,
-      tagIds: newRecord.value.tagIds // 发送 ID 数组给后端
+      // 使用用户在下拉框中选择的 collectionId
+      collectionId: newRecord.value.collectionId, 
+      tagIds: newRecord.value.tagIds
     }
 
-    // 发送请求 POST /records
     await recordsApi.createRecord(payload)
     
     ElMessage.success('创建成功')
     createDialogVisible.value = false
-    // 创建成功后，重新加载列表，看到最新数据
     loadRecords()
   } catch (error) {
     console.error(error)
@@ -277,15 +306,12 @@ const createRecord = async () => {
   }
 }
 
-// 4. 删除记录
 const deleteRecord = (record) => {
   ElMessageBox.confirm('确认删除?', '提示', { type: 'warning' })
     .then(async () => {
       try {
-        // 发送请求 DELETE /records/:id
         await recordsApi.deleteRecord(record.id)
         ElMessage.success('删除成功')
-        // 重新刷新列表
         loadRecords()
       } catch (error) {
         ElMessage.error('删除失败')
@@ -295,12 +321,25 @@ const deleteRecord = (record) => {
 }
 
 const showCreateDialog = () => { createDialogVisible.value = true }
-const resetForm = () => { newRecord.value = { title: '', contentType: 'TEXT', content: '', tagIds: [] } }
+
+// ✨✨✨ 6. 重置表单时也要清空 collectionId ✨✨✨
+const resetForm = () => { 
+  newRecord.value = { 
+    title: '', 
+    contentType: 'TEXT', 
+    content: '', 
+    tagIds: [],
+    collectionId: null 
+  } 
+}
+
 const viewRecord = (row) => { currentRecord.value = { ...row }; viewDialogVisible.value = true }
 
 // 初始化
 onMounted(() => {
   loadRecords()
+  loadTags()
+  loadCollections() // ✨✨✨ 7. 页面加载时获取集合列表
 })
 </script>
 

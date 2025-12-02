@@ -11,6 +11,10 @@ export default {
     return http.get(`/records/${id}`)
   },
 
+  getRecordsByCollectionId(collectionId) {
+    return http.get(`/records/collection/${collectionId}`)
+  },
+
   // 创建记录
   createRecord(data) {
     return http.post('/records', data)
@@ -49,5 +53,5 @@ export default {
   // 生成标签推荐
   generateTagRecommendations(id) {
     return http.get(`/records/${id}/tag-recommendations`)
-  }
+  },
 }

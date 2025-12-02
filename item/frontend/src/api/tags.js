@@ -20,4 +20,8 @@ export default{
     deleteTag(id){
         return http.delete(`/tags/${id}`)
     },
+
+    associateWithRecord(recordId, tagId) {
+        return http.post(`/records/${recordId}/tags/${tagId}`)
+    },
 }

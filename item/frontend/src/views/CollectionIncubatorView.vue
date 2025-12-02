@@ -82,7 +82,7 @@
         <div class="records-section">
           <div class="section-header">
             <h4>记录列表</h4>
-            <el-button type="primary" @click="showCreateRecordDialog">
+            <el-button type="primary" @click="showCreateDialog=true">
               <el-icon><Plus /></el-icon>
               创建记录
             </el-button>
@@ -93,8 +93,30 @@
           </div>
           
           <el-table v-else :data="records" style="width: 100%" stripe>
-            <el-table-column type="index" label="序号" width="80" />
-            <el-table-column prop="title" label="标题" min-width="300" show-overflow-tooltip />
+            <el-table-column type="index" label="#" width="60" align="center" />
+
+            <el-table-column prop="title" label="标题" min-width="300" show-overflow-tooltip>
+              <template #default="{ row }">
+                <span class="font-bold">{{ row.title }}</span>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="标签" width="250">
+              <template #default="{ row }">
+                <div class="tags-wrapper" v-if="row.tags && row.tags.length">
+                  <el-tag 
+                    v-for="tag in row.tags" 
+                    :key="tag.id" 
+                    size="small"
+                    :style="getTagStyle(tag)"
+                  >
+                    {{ tag.name }}
+                  </el-tag>
+                </div>
+                <span v-else class="text-gray-400 text-xs">无标签</span>
+              </template>
+            </el-table-column>
+
             <el-table-column prop="contentType" label="类型" width="120">
               <template #default="{ row }">
                 <el-tag :type="getContentTypeTag(row.contentType)" effect="plain">
@@ -102,8 +124,28 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="createdAt" label="创建时间" width="180" />
+
+            <el-table-column prop="createdAt" label="创建时间" width="180" >
+            <template #default="{ row }">
+                {{ formatDate(row.createdAt) }}
+              </template>
+            </el-table-column>
+
+            <el-table-column label="操作" width="150" align="center" fixed="right">
+              <template #default="{ row }">
+                <el-button link type="primary" size="small" @click="handleView(row)">
+                  查看
+                </el-button>
+                <el-button link type="danger" size="small" @click="handleDelete(row)">
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
           </el-table>
+
+          <!-- 空状态 -->
+          <el-empty v-if="records.length === 0" description="还没孵化出任何记录呢~" />
+
         </div>
       </div>
     </el-card>
@@ -113,17 +155,21 @@
       v-model="showCreateDialog"
       title="创建新记录"
       width="600px"
+      @closed="resetForm"
     >
       <el-form label-width="80px">
         <el-form-item label="记录标题">
           <el-input v-model="newRecord.title" placeholder="请输入记录标题" />
         </el-form-item>
         <el-form-item label="记录类型">
-          <el-radio-group v-model="newRecord.contentType">
-            <el-radio label="TEXT">文本</el-radio>
-            <el-radio label="LINK">链接</el-radio>
-            <el-radio label="IMAGE">图片</el-radio>
-          </el-radio-group>
+          <el-select v-model="newRecord.contentType" style="width: 100%">
+            <el-option label="文本" value="TEXT" />
+            <el-option label="链接" value="LINK" />
+            <el-option label="图片" value="IMAGE" />
+            <el-option label="视频" value="VIDEO" />
+            <el-option label="音频" value="AUDIO" />
+            <el-option label="文档" value="DOCUMENT" />
+          </el-select>
         </el-form-item>
         <el-form-item label="记录内容">
           <el-input
@@ -134,48 +180,102 @@
           />
         </el-form-item>
         <!-- 标签输入区域 -->
-        <el-form-item label="记录标签">
-          <div class="tag-input-container">
-            <!-- 已添加的标签 -->
-            <el-tag
-              v-for="(tag, index) in recordTags"
-              :key="index"
-              closable
-              @close="removeTag(index)"
-              class="tag-item"
+        <el-form-item label="标签">
+          <div class="tag-input-wrapper">
+            <!-- 使用 el-select 替代原来的 input -->
+            <el-select
+              v-model="recordTagNames"
+              multiple
+              filterable
+              allow-create
+              default-first-option
+              placeholder="请选择或输入新标签"
+              style="width: 100%"
             >
-              {{ tag }}
-            </el-tag>
-            <!-- 标签输入框 -->
-            <el-input
-              v-model="tagInput"
-              placeholder="输入标签并按回车"
-              @keyup.enter="addTag"
-              class="tag-input"
-              size="small"
-              clearable
-            />
-          </div>
-          <div class="tag-suggestions" v-if="availableTags.length > 0">
-            <span class="suggestion-label">推荐标签：</span>
-            <el-tag
-              v-for="tag in availableTags"
-              :key="tag.id"
-              @click="!recordTags.includes(tag.name) && recordTags.push(tag.name)"
-              clickable
-              size="small"
-              class="suggestion-tag"
-            >
-              {{ tag.name }}
-            </el-tag>
+              <el-option
+                v-for="item in availableTags"
+                :key="item.id"
+                :label="item.name"
+                :value="item.name"
+              >
+                <!-- 下拉框中显示颜色圆点 -->
+                <span class="flex items-center">
+                  <span 
+                    class="color-dot" 
+                    :style="{ 
+                      display: 'inline-block', 
+                      width: '8px', 
+                      height: '8px', 
+                      borderRadius: '50%', 
+                      marginRight: '8px',
+                      backgroundColor: item.color || '#409EFF' 
+                    }"
+                  ></span>
+                  {{ item.name }}
+                </span>
+              </el-option>
+            </el-select>
+
+            <!-- 保留推荐标签功能（可选，点击快速添加到上面的选择框中） -->
+            <div class="suggestions" v-if="availableTags.length > 0">
+              <span class="text-xs text-gray-400 mr-2" style="margin-top: 8px; display: inline-block;">推荐:</span>
+              <el-tag
+                v-for="tag in availableTags.slice(0, 5)"
+                :key="tag.id"
+                size="small"
+                class="cursor-pointer mr-1 hover-effect"
+                :style="{ color: tag.color, borderColor: tag.color, marginTop: '8px' }"
+                effect="plain"
+                @click="selectSuggestion(tag)"
+              >
+                {{ tag.name }}
+              </el-tag>
+            </div>
           </div>
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="resetForm; showCreateDialog = false">取消</el-button>
+          <el-button @click="showCreateDialog = false">取消</el-button>
           <el-button type="primary" @click="createRecord">创建</el-button>
         </span>
+      </template>
+    </el-dialog>
+    <el-dialog v-model="viewDialogVisible" title="记录详情" width="600px">
+      <el-descriptions border :column="1">
+        <el-descriptions-item label="标题">
+          <span class="font-bold">{{ currentRecord.title }}</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="类型">
+          <el-tag :type="getContentTypeTag(currentRecord.contentType)" size="small">
+            {{ getContentTypeLabel(currentRecord.contentType) }}
+          </el-tag>
+        </el-descriptions-item>
+
+        <el-descriptions-item label="标签">
+          <div v-if="currentRecord.tags && currentRecord.tags.length">
+            <el-tag 
+              v-for="tag in currentRecord.tags" 
+              :key="tag.id" 
+              size="small" 
+              class="mr-1"
+              :style="getTagStyle(tag)"
+            >
+              {{ tag.name }}
+            </el-tag>
+          </div>
+          <span v-else>无</span>
+        </el-descriptions-item>
+
+        <el-descriptions-item label="创建时间">
+          {{ formatDate(currentRecord.createdAt) }}
+        </el-descriptions-item>
+        <el-descriptions-item label="内容">
+          <div style="white-space: pre-wrap; line-height: 1.6;">{{ currentRecord.content }}</div>
+        </el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button @click="viewDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
   </div>
@@ -184,7 +284,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElDialog } from 'element-plus'
+import { ElMessage, ElDialog, ElMessageBox } from 'element-plus'
 import { 
   Folder, Star, Sugar, CollectionTag, ArrowLeft, 
   Document, Clock, RefreshRight, Plus 
@@ -207,9 +307,11 @@ const iconMap = {
 
 // 状态定义
 const loading = ref(true)
+const creating = ref(false)
 const progress = ref(0)
 const collection = ref(null)
 const records = ref([])
+const availableTags = ref([])
 
 // 创建记录相关状态
 const showCreateDialog = ref(false)
@@ -219,9 +321,7 @@ const newRecord = ref({
   contentType: 'TEXT'
 })
 // 标签相关状态
-const recordTags = ref([])
-const tagInput = ref('')
-const availableTags = ref([]) // 可选标签列表
+const recordTagNames = ref([])
 
 // 进度条颜色
 const customColorMethod = (percentage) => {
@@ -238,6 +338,33 @@ const progressText = computed(() => {
   return '孵化完成！'
 })
 
+// 加载集合数据
+const loadCollectionData = async () => {
+  try {
+    const id = route.params.id
+    
+    // 1. 并行请求：集合详情、当前集合的记录、所有标签
+    const [colRes, recRes, tagRes] = await Promise.all([
+      collectionsApi.getCollectionById(id),
+      recordsApi.getRecordsByCollectionId(id), // ✨ 直接获取该集合下的记录，精准且快
+      tagsApi.getAllTags()
+    ])
+
+    collection.value = colRes
+    
+    // 2. 直接赋值
+    records.value = recRes 
+    
+    availableTags.value = tagRes
+
+  } catch (error) {
+    console.error('数据加载失败:', error)
+    ElMessage.error('数据加载失败')
+    router.push('/collections')
+  } finally {
+  }
+}
+
 // 模拟孵化进度
 const simulateIncubation = () => {
   const timer = setInterval(() => {
@@ -251,29 +378,69 @@ const simulateIncubation = () => {
     }
   }, 300)
 }
+const selectSuggestion = (tagObj) => {
+  if (!recordTagNames.value.includes(tagObj.name)) {
+    recordTagNames.value.push(tagObj.name)
+  }
+}
 
-// 加载集合数据
-const loadCollectionData = async () => {
+// 创建记录
+const createRecord = async () => {
+  if (!newRecord.value.title.trim()) return ElMessage.warning('请输入标题')
+
+  creating.value = true
   try {
-    // 获取集合详情
-    const collectionData = await collectionsApi.getCollectionById(route.params.id)
-    collection.value = collectionData
+    //创建记录主体
+    const recordPayload = {
+      ...newRecord.value,
+      collectionId: collection.value.id
+    }
+    const createdRecord = await recordsApi.createRecord(recordPayload)
     
-    // 获取集合下的记录
-    // 假设API支持按集合ID查询记录，如果不支持可以先获取所有记录再过滤
-    const allRecords = await recordsApi.getAllRecords()
-    // 过滤出属于该集合的记录 (这里需要根据实际数据结构调整)
-    // 假设记录中有collectionId字段
-    records.value = allRecords.filter(record => 
-      record.collectionId && record.collectionId === collectionData.id
-    )
+    // 处理标签 (关联旧标签 或 创建新标签)
+    const finalTags = []
+
+    if (recordTagNames.value.length > 0) {
+      // 获取最新标签库，防止 ID 冲突（也可以直接用 availableTags）
+      const currentAllTags = await tagsApi.getAllTags()
+      
+      for (const name of recordTagNames.value) {
+        // 查找是否已存在
+        const existTag = currentAllTags.find(t => t.name === name)
+        
+        if (existTag) {
+          // 存在 -> 关联
+          await tagsApi.associateWithRecord(createdRecord.id, existTag.id)
+          finalTags.push(existTag)
+        } else {
+          // 不存在 -> 创建新标签 (后端通常会自动处理关联，或者我们传入 recordId)
+          const newTagRes = await tagsApi.createTag({ 
+            name, 
+            recordId: createdRecord.id // 假设后端支持创建时直接关联
+          })
+          finalTags.push(newTagRes)
+        }
+      }
+    }
+
+    // C. 更新前端列表 (手动组合数据，避免刷新页面)
+    const recordForDisplay = {
+      ...createdRecord,
+      tags: finalTags // 将处理好的标签数组挂载上去
+    }
     
-    // 加载所有标签供选择
-    loadAvailableTags()
+    records.value.unshift(recordForDisplay) // 添加到列表顶部
+    ElMessage.success('创建成功！')
+    showCreateDialog.value = false
+    
+    // 刷新一下推荐标签列表，因为可能有新创建的
+    loadAvailableTags() 
+
   } catch (error) {
-    console.error('加载集合数据失败:', error)
-    ElMessage.error('加载集合数据失败')
-    router.push('/collections')
+    console.error(error)
+    ElMessage.error('创建失败')
+  } finally {
+    creating.value = false
   }
 }
 
@@ -328,91 +495,6 @@ const getContentTypePlaceholder = computed(() => {
   return map[newRecord.value.contentType] || '请输入内容'
 })
 
-// 添加标签到记录
-const addTag = () => {
-  const tagText = tagInput.value.trim()
-  if (!tagText) return
-  
-  // 检查标签是否已存在
-  if (recordTags.value.some(tag => tag === tagText)) {
-    ElMessage.warning('该标签已添加')
-    return
-  }
-  
-  recordTags.value.push(tagText)
-  tagInput.value = ''
-}
-
-// 移除记录标签
-const removeTag = (index) => {
-  recordTags.value.splice(index, 1)
-}
-
-// 创建记录和关联标签
-const createRecord = async () => {
-  if (!newRecord.value.title.trim()) {
-    ElMessage.warning('请输入记录标题')
-    return
-  }
-  
-  try {
-    // 确保记录关联到当前集合
-    const recordData = {
-      ...newRecord.value,
-      collectionId: collection.value.id // 确保记录隶属于此集合
-    }
-    
-    // 1. 创建记录
-    const createdRecord = await recordsApi.createRecord(recordData)
-    const newRecordId = createdRecord.id
-    
-    // 2. 创建并关联标签到新创建的记录
-    if (recordTags.value.length > 0) {
-      for (const tagName of recordTags.value) {
-        if (!tagName.trim()) continue;
-        
-        try {
-          // 检查标签是否已存在
-          const existingTags = await tagsApi.getAllTags();
-          let tagId = existingTags.find(t => t.name === tagName)?.id;
-          
-          // 如果标签不存在，创建新标签并直接关联到记录
-          if (!tagId) {
-            const newTag = await tagsApi.createTag({
-              name: tagName,
-              recordId: newRecordId // 确保标签隶属于此记录
-            });
-            tagId = newTag.id;
-          } else {
-            // 如果标签已存在，确保它关联到记录
-            await tagsApi.associateWithRecord(newRecordId, tagId);
-          }
-        } catch (tagError) {
-          console.error(`处理标签 '${tagName}' 时出错:`, tagError)
-          // 继续处理其他标签，不中断整个流程
-        }
-      }
-    }
-    
-    // 更新本地记录列表
-    records.value.push(createdRecord)
-    
-    // 更新集合记录数量
-    if (collection.value) {
-      collection.value.recordCount = (collection.value.recordCount || 0) + 1
-    }
-    
-    ElMessage.success('记录和标签创建成功')
-    showCreateDialog.value = false
-    
-    // 重置表单
-    resetForm()
-  } catch (error) {
-    console.error('创建记录失败:', error)
-    ElMessage.error('创建记录失败')
-  }
-}
-
 // 重置表单
 const resetForm = () => {
   newRecord.value = {
@@ -420,8 +502,77 @@ const resetForm = () => {
     content: '',
     contentType: 'TEXT'
   }
-  recordTags.value = []
-  tagInput.value = ''
+  recordTagNames.value = []
+}
+
+const viewDialogVisible = ref(false)
+const currentRecord = ref({})
+
+//查看函数
+const handleView = (row) => {
+  currentRecord.value = { ...row } 
+  viewDialogVisible.value = true
+}
+
+// 删除处理函数
+const handleDelete = (row) => {
+  ElMessageBox.confirm(
+    '确定要删除这条记录吗？删除后不可恢复。',
+    '警告',
+    {
+      confirmButtonText: '确定删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+    }
+  )
+    .then(async () => {
+      try {
+        await recordsApi.deleteRecord(row.id)
+        ElMessage.success('删除成功')
+        // 重新加载数据
+        loadCollectionData()
+      } catch (error) {
+        console.error(error)
+        ElMessage.error('删除失败')
+      }
+    })
+    .catch(() => {
+      // 取消删除，不做任何操作
+    })
+}
+
+//标签颜色
+const defaultColors = [
+  '#409EFF', // 蓝
+  '#67C23A', // 绿
+  '#E6A23C', // 黄
+  '#F56C6C', // 红
+  '#909399', // 灰
+  '#a29bfe', // 紫
+  '#00cec9', // 青
+  '#fd79a8'  // 粉
+]
+
+// 2. 获取标签样式的辅助函数
+const getTagStyle = (tag) => {
+  let color = tag.color
+  
+  // 如果后端没返回颜色，根据标签名的长度取一个预设颜色
+  if (!color && tag.name) {
+    const index = tag.name.length % defaultColors.length
+    color = defaultColors[index]
+  }
+
+  // 如果还是没有，默认用蓝色
+  if (!color) color = '#409EFF'
+
+  return {
+    backgroundColor: color,
+    borderColor: color,
+    color: '#fff', // 白字
+    marginRight: '4px',
+    marginBottom: '4px'
+  }
 }
 
 // 初始化
