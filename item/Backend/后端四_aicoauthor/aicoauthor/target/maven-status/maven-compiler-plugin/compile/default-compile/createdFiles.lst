@@ -1,0 +1,7 @@
+com\example\aicoauthor\controller\AIGenerationController.class
+com\example\aicoauthor\service\AIGenerationService.class
+com\example\aicoauthor\dto\RefineRequest.class
+com\example\aicoauthor\client\AIClient.class
+com\example\aicoauthor\dto\GenerateRequest.class
+com\example\aicoauthor\dto\GenerateResponse.class
+com\example\aicoauthor\AicoauthorApplication.class
