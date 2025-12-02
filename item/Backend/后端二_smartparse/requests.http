@@ -1,0 +1,23 @@
+### 1. 测试功能 2.1 & 2.3: 网页智能解析 (POST /api/parse)
+# 目标：测试网页抓取、快照保存、AI摘要和标签模拟
+POST http://localhost:8080/api/parse
+Content-Type: application/json
+
+{
+  "url": "https://www.baidu.com"
+  // 注意：某些网站可能会阻止爬虫。如果百度失败，可以尝试 https://spring.io/
+}
+
+### 2. 测试功能 2.2: 媒体文件上传与总结 (POST /api/upload_media)
+# 目标：测试文件上传处理和AI模拟总结
+# 注意：你需要将文件的绝对路径替换掉 <FILE_PATH>
+# 在实际的小组作业中，前端会负责发送这个文件。
+POST http://localhost:8080/api/upload_media
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="my_audio_file.mp3"
+
+< /path/to/your/local/my_audio_file.mp3
+// 例如：C:/Users/Kang/Desktop/test.mp3
+--WebAppBoundary--
