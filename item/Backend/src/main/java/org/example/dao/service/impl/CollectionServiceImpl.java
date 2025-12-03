@@ -9,6 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.example.dao.pojo.UserBehavior;
+import org.example.dao.service.UserBehaviorService;
+
 import java.util.Date;
 import java.util.List;
 
@@ -18,6 +21,9 @@ public class CollectionServiceImpl implements CollectionService {
 
     @Autowired
     private CollectionMapper collectionMapper;
+
+    @Autowired
+    private UserBehaviorService userBehaviorService;
 
     @Override
     public List<CollectionEntity> findAll() {
@@ -35,6 +41,11 @@ public class CollectionServiceImpl implements CollectionService {
         collection.setCreateTime(now);
         collection.setUpdateTime(now);
         collectionMapper.insert(collection);
+
+        // 假设 userId 可以从 collection 对象中获取，如果不能，需要调整
+        // Long userId = collection.getCreatorId(); 
+        Long userId = 1L; // 暂时硬编码为 1L，需要根据实际情况修改
+        userBehaviorService.recordBehavior(userId, UserBehavior.BehaviorType.COLLECT, collection.getId().longValue());
     }
 
     @Override
