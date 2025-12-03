@@ -2,7 +2,7 @@
 
 ## 项目介绍
 
-EchoLogic 是一个个人知识管理系统，基于 Electron + Vue3 + Spring Boot 构建。本系统支持集合、记录和标签的管理功能。
+EchoLogic 是一个个人知识管理系统，基于 Electron + Vue3 + Spring Boot 构建。本系统支持集合、记录和标签的管理功能，并集成了 AI 对话功能，能够理解用户的自然语言指令并执行相应操作，如记录查询、筛选等（AI实际调用仍存在bug）。
 
 ## 项目结构
 
@@ -141,17 +141,70 @@ npm run dev
 
 - **前端**：Vue 3, Element Plus, Vue Router, Pinia, Electron
 - **后端**：Spring Boot 3.x, MyBatis, MySQL, Swagger/OpenAPI
+- **AI 功能**：集成 AI 对话接口，支持自然语言指令解析和执行
 
 ## 开发建议
 
 1. 前端开发时，建议先启动后端服务，然后再启动前端开发服务器
 2. 修改代码时，前端开发服务器支持热更新，后端需要重新启动或使用开发工具的热部署功能
 3. 使用 Swagger 文档查看和测试后端 API
+4. AI 对话功能支持自然语言指令，如"查看目前都有哪些记录"、"筛选出所有有关数字的记录"等
+
+## AI 功能说明
+
+### 对话功能
+
+系统集成了 AI 对话面板，用户可以通过自然语言与系统交互，系统会解析用户指令并执行相应操作。
+
+### 支持的指令
+
+1. **列表指令**：
+   - 示例："查看目前都有哪些记录"
+   - 功能：导航到记录列表页面
+
+2. **筛选指令**：
+   - 示例："筛选出所有有关数字的记录"
+   - 功能：筛选并显示符合条件的记录
+
+### 指令格式
+
+系统支持两种指令格式：
+1. 自然语言指令：如"查看目前都有哪些记录"
+2. JSON 格式指令：如`{"type":"command","command":"filter","params":{"keyword":"数字"}}`
+
+系统会自动识别并执行这两种格式的指令。
+
+### API-Key 配置
+
+系统使用 DeepSeek AI 服务，需要配置 API-Key 才能正常使用 AI 功能。
+
+#### 配置方式
+
+1. **修改后端配置文件**：
+   - 打开文件：`backend/src/main/resources/application.properties`
+   - 找到以下配置项并修改为您自己的 API-Key：
+   ```properties
+   # DeepSeek AI API 配置
+   ai.deepseek.api-url=https://api.deepseek.com/v1/chat/completions
+   ai.deepseek.api-key=sk-your-api-key-here
+   ```
+
+2. **API-Key 获取方式**：
+   - 访问 [DeepSeek 官方网站](https://deepseek.com/)
+   - 注册并登录账号
+   - 进入控制台获取 API-Key
+
+#### 注意事项
+
+- API-Key 是您的个人凭证，请妥善保管，不要泄露给他人
+- 免费版 API-Key 有使用次数限制，请根据实际需求选择合适的套餐
+- 更换 API-Key 后需要重启后端服务才能生效
 
 ## 端口占用情况
 
 - 前端开发服务器：5173
 - 后端 API 服务：8080
 - MySQL 数据库：3306
+- AI 服务接口：集成在后端服务中，无需额外端口
 
 请确保这些端口没有被其他应用占用。

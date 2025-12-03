@@ -13,11 +13,9 @@ CREATE TABLE IF NOT EXISTS record (
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     content_type VARCHAR(50) NOT NULL,
-    collection_id INT NOT NULL,
     create_time DATETIME NOT NULL,
     update_time DATETIME NOT NULL,
-    deleted BOOLEAN NOT NULL DEFAULT FALSE,
-    FOREIGN KEY (collection_id) REFERENCES collection(id) ON DELETE CASCADE
+    deleted BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 -- 创建标签表
@@ -34,4 +32,13 @@ CREATE TABLE IF NOT EXISTS record_tag (
     PRIMARY KEY (record_id, tag_id),
     FOREIGN KEY (record_id) REFERENCES record(id) ON DELETE CASCADE,
     FOREIGN KEY (tag_id) REFERENCES tag(id) ON DELETE CASCADE
+);
+
+-- 创建记录和集合的多对多关联表
+CREATE TABLE IF NOT EXISTS record_collection (
+    record_id INT NOT NULL,
+    collection_id INT NOT NULL,
+    PRIMARY KEY (record_id, collection_id),
+    FOREIGN KEY (record_id) REFERENCES record(id) ON DELETE CASCADE,
+    FOREIGN KEY (collection_id) REFERENCES collection(id) ON DELETE CASCADE
 );

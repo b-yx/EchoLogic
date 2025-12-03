@@ -25,8 +25,11 @@ public interface RecordService {
     // 删除记录
     void deleteRecord(Integer id);
     
-    // 为记录添加标签
+    // 为记录添加单个标签
     void addTagToRecord(Integer recordId, Integer tagId);
+    
+    // 为记录批量添加标签
+    void addTagsToRecord(Integer recordId, List<Integer> tagIds);
     
     // 从记录中移除标签
     void removeTagFromRecord(Integer recordId, Integer tagId);
@@ -48,4 +51,7 @@ public interface RecordService {
     
     // 生成标签推荐
     List<Tagx> generateTagRecommendations(Integer id);
+    
+    // 获取所有记录（用于AI筛选）
+    List<Record> getAllRecords();
 }

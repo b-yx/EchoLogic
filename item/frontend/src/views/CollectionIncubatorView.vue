@@ -390,12 +390,14 @@ const createRecord = async () => {
 
   creating.value = true
   try {
-    //创建记录主体
+    //创建记录主体（不包含collectionId，因为现在是多对多关系）
     const recordPayload = {
-      ...newRecord.value,
-      collectionId: collection.value.id
+      ...newRecord.value
     }
     const createdRecord = await recordsApi.createRecord(recordPayload)
+    
+    // 通过多对多关系API将记录添加到集合
+    await collectionsApi.addRecordToCollection(collection.value.id, createdRecord.id)
     
     // 处理标签 (关联旧标签 或 创建新标签)
     const finalTags = []
@@ -517,27 +519,27 @@ const handleView = (row) => {
 // 删除处理函数
 const handleDelete = (row) => {
   ElMessageBox.confirm(
-    '确定要删除这条记录吗？删除后不可恢复。',
+    '确定要将这条记录从集合中移除吗？',
     '警告',
     {
-      confirmButtonText: '确定删除',
+      confirmButtonText: '确定移除',
       cancelButtonText: '取消',
       type: 'warning',
     }
   )
     .then(async () => {
       try {
-        await recordsApi.deleteRecord(row.id)
-        ElMessage.success('删除成功')
+        await collectionsApi.removeRecordFromCollection(collection.value.id, row.id)
+        ElMessage.success('移除成功')
         // 重新加载数据
         loadCollectionData()
       } catch (error) {
         console.error(error)
-        ElMessage.error('删除失败')
+        ElMessage.error('移除失败')
       }
     })
     .catch(() => {
-      // 取消删除，不做任何操作
+      // 取消移除，不做任何操作
     })
 }
 

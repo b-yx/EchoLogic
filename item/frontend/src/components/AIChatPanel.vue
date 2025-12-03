@@ -24,7 +24,7 @@
         resize="none"
         @keydown.enter.prevent="sendMessage"
       />
-      <el-button type="primary" size="small" class="send-btn" @click="sendMessage">
+      <el-button type="primary" size="small" class="send-btn" @click="sendMessage" :loading="loading">
         发送
       </el-button>
     </div>
@@ -32,40 +32,92 @@
 </template>
 
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, defineEmits } from 'vue'
 import { Cpu } from '@element-plus/icons-vue'
+import { chatWithAI } from '../api/ai'
+
+// 定义事件
+const emit = defineEmits(['execute-command'])
 
 const input = ref('')
 const messagesRef = ref(null)
+const loading = ref(false)
+
+// 初始化对话历史，包含AI的欢迎消息
 const messages = ref([
-  { role: 'ai', content: '您好！我是您的知识库 AI 助手。有什么我可以帮您的吗？' }
+  { role: 'assistant', content: '您好！我是您的知识库 AI 助手。有什么我可以帮您的吗？' }
 ])
 
 const sendMessage = async () => {
-  if (!input.value.trim()) return
+  if (!input.value.trim() || loading.value) return
 
   // 添加用户消息
-  messages.value.push({ role: 'user', content: input.value })
   const userInput = input.value
+  messages.value.push({ role: 'user', content: userInput })
   input.value = ''
+  loading.value = true
 
   // 滚动到底部
   await nextTick()
   scrollToBottom()
 
-  // 模拟 AI 回复 (1秒后)
-  setTimeout(() => {
-    messages.value.push({ 
-      role: 'ai', 
-      content: `关于 "${userInput}"，我正在检索您的知识库... (模拟回复)` 
+  try {
+    // 准备对话历史，格式化为后端所需的格式
+    const conversationHistory = messages.value.map(msg => {
+      return {
+        role: msg.role === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      }
     })
-    nextTick(() => scrollToBottom())
-  }, 1000)
+
+    // 调用AI对话接口
+    const response = await chatWithAI(conversationHistory)
+    console.log('AI API响应:', response)
+    const aiResponse = response.message
+    console.log('AI回复内容:', aiResponse)
+
+    // 添加AI回复
+    messages.value.push({ role: 'assistant', content: aiResponse })
+    console.log('添加AI回复后消息列表长度:', messages.value.length)
+    console.log('最后一条消息:', messages.value[messages.value.length - 1])
+    await nextTick()
+    console.log('DOM更新后')
+    scrollToBottom()
+    console.log('滚动到底部完成')
+
+    // 检查是否是功能性指令并执行
+    handleAICommand(aiResponse)
+  } catch (error) {
+    console.error('AI对话失败:', error)
+    messages.value.push({ 
+      role: 'assistant', 
+      content: '抱歉，AI服务暂时不可用，请稍后重试。' 
+    })
+    await nextTick()
+    scrollToBottom()
+  } finally {
+    loading.value = false
+  }
 }
 
 const scrollToBottom = () => {
   if (messagesRef.value) {
     messagesRef.value.scrollTop = messagesRef.value.scrollHeight
+  }
+}
+
+// 处理AI的功能性指令
+const handleAICommand = (response) => {
+  try {
+    // 尝试解析JSON格式的指令
+    const command = JSON.parse(response)
+    if (command.type === 'command') {
+      // 向父组件发送指令执行事件
+      emit('execute-command', command)
+    }
+  } catch (e) {
+    // 如果不是JSON格式，忽略
+    return
   }
 }
 </script>

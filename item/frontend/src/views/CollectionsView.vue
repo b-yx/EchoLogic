@@ -13,11 +13,23 @@
             >
               <template #prefix><el-icon><Search /></el-icon></template>
             </el-input>
-          <el-button type="primary" @click="showCreateDialog">
-            <el-icon class="mr-1"><Plus /></el-icon>
-            新建集合
-          </el-button>
-        </div>
+            <el-button type="primary" @click="showCreateDialog">
+              <el-icon class="mr-1"><Plus /></el-icon>
+              新建集合
+            </el-button>
+            <el-button type="success" @click="showAIDialog">
+              <el-icon class="mr-1"><ChatRound /></el-icon>
+              AI生成集合
+            </el-button>
+            <el-button 
+              type="warning" 
+              @click="showMergeDialog" 
+              :disabled="selectedCollections.length < 2"
+            >
+              <el-icon class="mr-1"><RefreshRight /></el-icon>
+              合并集合 ({{ selectedCollections.length }})
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -31,8 +43,19 @@
           :key="collection.id"
           :xs="24" :sm="12" :md="8"
         >
-          <el-card class="collection-card" shadow="hover" @click="viewCollection(collection)">
+          <el-card 
+            class="collection-card" 
+            shadow="hover" 
+            @click="viewCollection(collection)"
+          >
             <div class="collection-item">
+              <div class="collection-select">
+                <el-checkbox 
+                  :checked="isSelected(collection.id)" 
+                  @change="toggleSelect(collection)"
+                  @click.stop
+                />
+              </div>
               <div class="collection-icon">
                 <el-icon :size="40" :style="{ color: collection.color }">
                   <!-- 使用 component 动态渲染图标组件 -->
@@ -110,14 +133,91 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- AI生成集合弹窗 -->
+    <el-dialog
+      v-model="aiDialogVisible"
+      title="AI生成集合"
+      width="600px"
+      @closed="resetAIForm"
+    >
+      <el-form :model="aiForm" label-width="80px">
+        <el-form-item label="描述" required>
+          <el-input 
+            v-model="aiForm.description" 
+            type="textarea" 
+            :rows="5" 
+            placeholder="请描述你想要创建的集合，例如：'所有关于机器学习的笔记'或'我上周创建的会议记录'"
+          />
+        </el-form-item>
+        <el-alert
+          title="AI将根据你的描述自动筛选相关记录并创建集合"
+          type="info"
+          :closable="false"
+          class="mt-4"
+        />
+      </el-form>
+      <template #footer>
+        <el-button @click="aiDialogVisible = false">取消</el-button>
+        <el-button type="success" @click="generateCollectionWithAI" :loading="aiGenerating">
+          <el-icon class="mr-1"><MagicStick /></el-icon>
+          开始生成
+        </el-button>
+      </template>
+    </el-dialog>
+    
+    <!-- 合并集合弹窗 -->
+    <el-dialog
+      v-model="mergeDialogVisible"
+      title="合并集合"
+      width="500px"
+      @closed="() => selectedCollections.value = []"
+    >
+      <el-form :model="{}" label-width="80px">
+        <el-form-item label="选择目标集合">
+          <el-select v-model="targetCollection" placeholder="请选择目标集合" style="width: 100%">
+            <el-option
+              v-for="collection in selectedCollections"
+              :key="collection.id"
+              :label="collection.name"
+              :value="collection"
+            >
+              {{ collection.name }}
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="源集合">
+          <div class="source-collections">
+            <el-tag 
+              v-for="collection in selectedCollections.filter(c => c.id !== targetCollection?.id)"
+              :key="collection.id"
+              closable
+              @close="toggleSelect(collection)"
+            >
+              {{ collection.name }}
+            </el-tag>
+            <span v-if="selectedCollections.filter(c => c.id !== targetCollection?.id).length === 0" class="text-gray-500">
+              无
+            </span>
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="mergeDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="mergeCollections">
+              <el-icon class="mr-1"><RefreshRight /></el-icon>
+              合并
+            </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, shallowRef } from 'vue'
+import { ref, onMounted, shallowRef, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
-import { Plus, Folder, Star, Sugar, CollectionTag } from '@element-plus/icons-vue'
+import { Plus, Folder, Star, Sugar, CollectionTag, ChatRound, MagicStick, RefreshRight } from '@element-plus/icons-vue'
 import collectionsApi from '@/api/collections'
 
 // 使用 shallowRef 避免不必要的性能开销
@@ -131,13 +231,26 @@ const iconMap = {
 // 路由
 const router = useRouter()
 
-// === 状态定义 ===
+// 获取全局更新方法
+const updateCollections = inject('updateCollections')
+
+// 状态定义 ===
 const collections = ref([])
 const loading = ref(false)
 const searchKeyword = ref('')
 const dialogVisible = ref(false)
 const saving = ref(false)
 const isEdit = ref(false)
+const aiDialogVisible = ref(false)
+const aiGenerating = ref(false)
+const mergeDialogVisible = ref(false)
+const selectedCollections = ref([])
+const targetCollection = ref(null)
+
+// AI生成集合的表单
+const aiForm = ref({
+  description: ''
+})
 
 const collectionForm = ref({
   id: null,
@@ -184,6 +297,11 @@ const resetForm = () => {
   collectionForm.value = { id: null, name: '', description: '', color: '#409EFF', icon: 'folder' }
 }
 
+// 重置AI表单
+const resetAIForm = () => {
+  aiForm.value = { description: '' }
+}
+
 // 4. 保存集合 
 const saveCollection = async () => {
   if (!collectionForm.value.name.trim()) return ElMessage.warning('请输入名称')
@@ -199,6 +317,9 @@ const saveCollection = async () => {
     }
     dialogVisible.value = false
     loadCollections()
+    
+    // 更新快速分类栏目
+    if (updateCollections) updateCollections()
   } catch (error) {
     ElMessage.error('保存失败')
   } finally {
@@ -214,6 +335,9 @@ const deleteCollection = (collection) => {
         await collectionsApi.deleteCollection(collection.id)
         ElMessage.success('删除成功')
         loadCollections()
+        
+        // 更新快速分类栏目
+        if (updateCollections) updateCollections()
       } catch (error) {
         ElMessage.error('删除失败')
       }
@@ -223,6 +347,95 @@ const deleteCollection = (collection) => {
 
 const viewCollection = (collection) => {
   router.push({ name: 'collection-incubator', params: { id: collection.id } })
+}
+
+const isSelected = (id) => {
+  return selectedCollections.value.some(collection => collection.id === id)
+}
+
+const toggleSelect = (collection) => {
+  const index = selectedCollections.value.findIndex(item => item.id === collection.id)
+  if (index > -1) {
+    selectedCollections.value.splice(index, 1)
+  } else {
+    selectedCollections.value.push(collection)
+  }
+}
+
+const showMergeDialog = () => {
+  if (selectedCollections.value.length < 2) {
+    ElMessage.warning('请至少选择两个集合进行合并')
+    return
+  }
+  targetCollection.value = selectedCollections.value[0]
+  mergeDialogVisible.value = true
+}
+
+const mergeCollections = async () => {
+  if (!targetCollection.value) {
+    ElMessage.warning('请选择目标集合')
+    return
+  }
+  
+  const sourceIds = selectedCollections.value
+    .filter(collection => collection.id !== targetCollection.value.id)
+    .map(collection => collection.id)
+    
+  if (sourceIds.length === 0) {
+    ElMessage.warning('请至少选择一个源集合进行合并')
+    return
+  }
+  
+  try {
+    await collectionsApi.mergeCollections({
+      targetCollectionId: targetCollection.value.id,
+      sourceCollectionIds: sourceIds
+    })
+    
+    ElMessage.success('集合合并成功')
+    mergeDialogVisible.value = false
+    selectedCollections.value = []
+    loadCollections()
+    
+    // 更新快速分类栏目
+    if (updateCollections) updateCollections()
+  } catch (error) {
+    ElMessage.error('集合合并失败')
+  }
+}
+
+// AI生成集合相关方法
+const showAIDialog = () => {
+  aiDialogVisible.value = true
+}
+
+// 调用AI生成集合的API
+const generateCollectionWithAI = async () => {
+  if (!aiForm.value.description.trim()) {
+    return ElMessage.warning('请输入描述')
+  }
+
+  aiGenerating.value = true
+  try {
+    const response = await collectionsApi.generateCollectionByAI({ description: aiForm.value.description })
+    if (response.success) {
+      ElMessage.success(`集合生成成功！匹配到 ${response.matchedRecordsCount} 个记录`)
+      aiDialogVisible.value = false
+      loadCollections()
+      
+      // 更新快速分类栏目
+      if (updateCollections) updateCollections()
+      
+      // 自动跳转到新生成的集合页面
+      router.push({ name: 'collection-incubator', params: { id: response.collection.id } })
+    } else {
+      ElMessage.error(response.message || '生成集合失败')
+    }
+  } catch (error) {
+    ElMessage.error('生成集合失败：' + (error.response?.data?.message || error.message))
+  } finally {
+    aiGenerating.value = false
+  }
 }
 
 onMounted(() => {
@@ -271,6 +484,20 @@ onMounted(() => {
 .collection-item {
   text-align: center;
   padding: 10px;
+}
+
+.collection-select {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+}
+
+.source-collections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .collection-icon {

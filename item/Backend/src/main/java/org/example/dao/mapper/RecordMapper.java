@@ -15,12 +15,8 @@ public interface RecordMapper {
     @Select("SELECT * FROM record WHERE id = #{id}")
     Record findById(Integer id);
     
-    // 根据集合ID查询记录（排除已删除的）
-    @Select("SELECT * FROM record WHERE collection_id = #{collectionId} AND deleted = false ORDER BY create_time DESC")
-    List<Record> findByCollectionId(Integer collectionId);
-    
     // 添加记录
-    @Insert("INSERT INTO record(title, content, content_type, collection_id, create_time, update_time, deleted) VALUES(#{title}, #{content}, #{contentType}, #{collectionId}, #{createTime}, #{updateTime}, #{deleted})")
+    @Insert("INSERT INTO record(title, content, content_type, create_time, update_time, deleted) VALUES(#{title}, #{content}, #{contentType}, #{createTime}, #{updateTime}, #{deleted})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insert(Record record);
     

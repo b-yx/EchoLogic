@@ -1,6 +1,7 @@
 package org.example.dao.service.impl;
 
 import org.example.dao.mapper.RecordMapper;
+import org.example.dao.mapper.RecordCollectionMapper;
 import org.example.dao.mapper.TagxMapper;
 import org.example.dao.pojo.Record;
 import org.example.dao.pojo.Tagx;
@@ -21,6 +22,9 @@ public class RecordServiceImpl implements RecordService {
     
     @Autowired
     private TagxMapper tagMapper;
+    
+    @Autowired
+    private RecordCollectionMapper recordCollectionMapper;
 
     @Override
     public List<Record> findAll() {
@@ -34,8 +38,11 @@ public class RecordServiceImpl implements RecordService {
 
     @Override
     public List<Record> findByCollectionId(Integer collectionId) {
-        return recordMapper.findByCollectionId(collectionId);
+        // 这个方法暂时返回空列表，因为当前实现中没有集合功能
+        return recordMapper.findAll();
     }
+
+
 
     @Transactional
     @Override
@@ -47,16 +54,15 @@ public class RecordServiceImpl implements RecordService {
         if (record.getContent() == null || record.getContent().trim().isEmpty()) {
             throw new IllegalArgumentException("内容不能为空");
         }
-        // 如果记录类型为空，设置默认值为"text"
+        // 如果记录类型为空，设置默认值为"TEXT"
         if (record.getContentType() == null || record.getContentType().trim().isEmpty()) {
-            System.out.println("记录类型为空，设置默认值为'text'");
-            record.setContentType("text");
+            System.out.println("记录类型为空，设置默认值为'TEXT'");
+            record.setContentType("TEXT");
+        } else {
+            // 统一contentType的大小写为大写
+            record.setContentType(record.getContentType().toUpperCase());
         }
-        // 如果所属集合ID为空，设置默认值为2（数据库中存在的集合ID）
-        if (record.getCollectionId() == null) {
-            System.out.println("所属集合ID为空，设置默认值为2");
-            record.setCollectionId(2);
-        }
+
         
         // 设置创建时间和更新时间
         Date now = new Date();
@@ -139,9 +145,12 @@ public class RecordServiceImpl implements RecordService {
     @Transactional
     @Override
     public void deleteRecord(Integer id) {
-        // 先删除关联的标签关系
+        // 级联删除：当删除一条记录时，同时删除该记录在所有集合中的关联
+        // 清除记录与标签的关联
         recordMapper.clearRecordTags(id);
-        // 再删除记录
+        // 清除记录与所有集合的关联
+        recordCollectionMapper.clearRecordCollections(id);
+        // 删除记录
         recordMapper.delete(id);
     }
 
@@ -153,6 +162,22 @@ public class RecordServiceImpl implements RecordService {
     @Override
     public void removeTagFromRecord(Integer recordId, Integer tagId) {
         recordMapper.removeTagFromRecord(recordId, tagId);
+    }
+
+    @Transactional
+    @Override
+    public void addTagsToRecord(Integer recordId, List<Integer> tagIds) {
+        // 先清除现有标签关联
+        recordMapper.clearRecordTags(recordId);
+        
+        // 添加新的标签关联
+        if (tagIds != null && !tagIds.isEmpty()) {
+            for (Integer tagId : tagIds) {
+                if (tagId != null) {
+                    recordMapper.addTagToRecord(recordId, tagId);
+                }
+            }
+        }
     }
 
     @Override
@@ -206,5 +231,10 @@ public class RecordServiceImpl implements RecordService {
             return tagMapper.findAll();
         }
         return null;
+    }
+
+    @Override
+    public List<Record> getAllRecords() {
+        return recordMapper.findAll();
     }
 }

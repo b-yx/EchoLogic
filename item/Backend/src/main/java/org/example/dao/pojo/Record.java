@@ -14,7 +14,6 @@ public class Record {
     private String title;  // 记录标题
     private String content;  // 记录的文本内容
     private String contentType;  // 记录类型
-    private Integer collectionId;  // 所属的集合ID
     private Date createTime;  // 创建时间
     private Date updateTime;  // 更新时间
     private Boolean deleted = false;  // 是否删除（用于软删除）

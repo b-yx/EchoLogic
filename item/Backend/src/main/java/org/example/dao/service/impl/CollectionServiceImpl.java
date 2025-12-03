@@ -1,7 +1,10 @@
 package org.example.dao.service.impl;
 
 import org.example.dao.mapper.CollectionMapper;
+import org.example.dao.mapper.RecordMapper;
+import org.example.dao.mapper.RecordCollectionMapper;
 import org.example.dao.pojo.CollectionEntity;
+import org.example.dao.pojo.Record;
 import org.example.dao.service.CollectionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -9,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -18,6 +22,12 @@ public class CollectionServiceImpl implements CollectionService {
 
     @Autowired
     private CollectionMapper collectionMapper;
+    
+    @Autowired
+    private RecordMapper recordMapper;
+    
+    @Autowired
+    private RecordCollectionMapper recordCollectionMapper;
 
     @Override
     public List<CollectionEntity> findAll() {
@@ -118,6 +128,63 @@ public class CollectionServiceImpl implements CollectionService {
 
     @Override
     public void deleteCollection(Integer id) {
+        // 先删除关联记录
+        recordCollectionMapper.clearCollectionRecords(id);
+        // 再删除集合
         collectionMapper.delete(id);
+    }
+    
+    @Override
+    public List<Record> findRecordsByCollectionId(Integer collectionId) {
+        List<Integer> recordIds = recordCollectionMapper.findRecordsByCollectionId(collectionId);
+        List<Record> records = new ArrayList<>();
+        for (Integer recordId : recordIds) {
+            Record record = recordMapper.findById(recordId);
+            if (record != null) {
+                records.add(record);
+            }
+        }
+        return records;
+    }
+    
+    @Override
+    public void addRecordToCollection(Integer recordId, Integer collectionId) {
+        recordCollectionMapper.addRecordToCollection(recordId, collectionId);
+    }
+    
+    @Override
+    public void removeRecordFromCollection(Integer recordId, Integer collectionId) {
+        recordCollectionMapper.removeRecordFromCollection(recordId, collectionId);
+    }
+    
+    @Override
+    @Transactional
+    public void mergeCollections(Integer targetCollectionId, List<Integer> sourceCollectionIds) {
+        // 获取目标集合已有的记录ID
+        List<Integer> existingRecordIds = recordCollectionMapper.findRecordsByCollectionId(targetCollectionId);
+        
+        // 遍历所有源集合
+        for (Integer sourceCollectionId : sourceCollectionIds) {
+            // 获取源集合中的记录ID
+            List<Integer> sourceRecordIds = recordCollectionMapper.findRecordsByCollectionId(sourceCollectionId);
+            
+            // 将源集合中的记录添加到目标集合中（自动去重）
+            for (Integer recordId : sourceRecordIds) {
+                if (!existingRecordIds.contains(recordId)) {
+                    recordCollectionMapper.addRecordToCollection(recordId, targetCollectionId);
+                    existingRecordIds.add(recordId); // 更新已存在记录列表
+                }
+            }
+            
+            // 合并完成后删除源集合
+            deleteCollection(sourceCollectionId);
+        }
+        
+        // 更新目标集合的更新时间
+        CollectionEntity targetCollection = findById(targetCollectionId);
+        if (targetCollection != null) {
+            targetCollection.setUpdateTime(new Date());
+            collectionMapper.update(targetCollection);
+        }
     }
 }

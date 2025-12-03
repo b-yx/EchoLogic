@@ -67,7 +67,6 @@ public class CollectionRecordTest {
         record.setTitle("测试记录标题");
         record.setContent("这是一条测试记录");
         record.setContentType("text/plain");
-        record.setCollectionId(collection.getId());
         record.setCreateTime(new java.util.Date());
         record.setUpdateTime(new java.util.Date());
         record.setTags(Arrays.asList(tag1, tag2));
@@ -75,8 +74,12 @@ public class CollectionRecordTest {
         
         System.out.println("创建记录成功: " + record.getId());
         
+        // 将记录添加到集合（多对多关系）
+        collectionService.addRecordToCollection(record.getId(), collection.getId());
+        System.out.println("将记录添加到集合成功");
+        
         // 查询集合中的记录
-        List<Record> records = recordService.findByCollectionId(collection.getId());
+        List<Record> records = collectionService.findRecordsByCollectionId(collection.getId());
         System.out.println("集合中的记录数量: " + records.size());
         
         // 查询记录的标签

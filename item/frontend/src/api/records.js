@@ -12,7 +12,7 @@ export default {
   },
 
   getRecordsByCollectionId(collectionId) {
-    return http.get(`/records/collection/${collectionId}`)
+    return http.get(`/collections/${collectionId}/records`)
   },
 
   // 创建记录

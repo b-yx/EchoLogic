@@ -46,20 +46,35 @@
     <el-card class="records-list">
       <el-table :data="records" style="width: 100%" v-loading="loading" stripe>
         <el-table-column label="ID" width="100" type="index" :index="indexMethod" />
-        <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="title" label="标题" min-width="250">
+          <template #default="{ row }">
+            <div style="white-space: normal;">{{ row.title }}</div>
+          </template>
+        </el-table-column>
         
         <el-table-column label="标签" width="200">
           <template #default="{ row }">
             <div class="tags-wrapper">
-              <el-tag 
-                v-for="tag in row.tags" 
-                :key="tag.id" 
-                size="small"
-                :style="{ backgroundColor: tag.color, borderColor: tag.color, color: 'white' }"
-                class="mr-1"
-              >
-                {{ tag.name }}
-              </el-tag>
+              <template v-if="(row.tags || []).length > 0">
+                <el-tag 
+                  v-for="(tag, index) in (row.tags || [])" 
+                  :key="tag?.id || index" 
+                  size="small"
+                  :style="{ backgroundColor: tag?.color || '#409eff', borderColor: tag?.color || '#409eff', color: 'white' }"
+                  class="mr-1"
+                  v-if="index < 3"
+                >
+                  {{ tag?.name || '未知标签' }}
+                </el-tag>
+                <el-tag 
+                  v-if="(row.tags || []).length > 3" 
+                  size="small" 
+                  effect="plain"
+                >
+                  +{{ (row.tags || []).length - 3 }}
+                </el-tag>
+              </template>
+              <span v-else class="text-gray-500">暂无标签</span>
             </div>
           </template>
         </el-table-column>
@@ -72,7 +87,19 @@
           </template>
         </el-table-column>
         
-        <el-table-column prop="createdAt" label="创建时间" width="180" sortable />
+        <el-table-column prop="content" label="内容" min-width="300">
+          <template #default="{ row }">
+            <div style="white-space: normal; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+              {{ row.content || '' }}
+            </div>
+          </template>
+        </el-table-column>
+        
+        <el-table-column prop="createTime" label="创建时间" width="180" sortable>
+          <template #default="{ row }">
+            {{ row.createTime || '暂无时间' }}
+          </template>
+        </el-table-column>
         
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
@@ -97,11 +124,11 @@
           <el-input v-model="newRecord.title" placeholder="请输入标题" />
         </el-form-item>
 
-        <!-- ✨✨✨ 新增：选择所属集合 ✨✨✨ -->
-        <el-form-item label="所属集合" required>
+        <!-- 所属集合（可选） -->
+        <el-form-item label="所属集合">
           <el-select 
             v-model="newRecord.collectionId" 
-            placeholder="请选择所属集合" 
+            placeholder="选择所属集合（可选）" 
             style="width: 100%"
             filterable
           >
@@ -177,9 +204,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
+import { useRoute } from 'vue-router'
 import recordsApi from '@/api/records'
 import tagsApi from '@/api/tags'
 // ✨✨✨ 1. 引入 Collections API ✨✨✨
@@ -187,6 +215,13 @@ import collectionsApi from '@/api/collections'
 
 // 状态定义
 const records = ref([])
+
+// 获取路由信息
+const route = useRoute()
+
+// 获取全局更新方法
+const updateRecords = inject('updateRecords')
+const updateCollections = inject('updateCollections')
 const loading = ref(false)
 const searchKeyword = ref('')
 const filterType = ref('')
@@ -208,7 +243,9 @@ const newRecord = ref({
 })
 
 const getContentTypeLabel = (type) => {
-  const map = { TEXT: '文本', LINK: '链接', IMAGE: '图片' }
+  const map = { TEXT: '文本', LINK: '链接', IMAGE: '图片', VIDEO: '视频', AUDIO: '音频', DOCUMENT: '文档' }
+  // 处理空字符串情况
+  if (!type) return '未知类型'
   return map[type] || type
 }
 
@@ -247,9 +284,12 @@ const loadRecords = async () => {
   loading.value = true
   try {
     const data = await recordsApi.getAllRecords()
+    console.log('获取到的记录数据:', data)
     records.value = data 
+    console.log('records数组长度:', records.value.length)
   } catch (error) {
     console.error('获取记录数据失败:', error)
+    console.error('错误详情:', JSON.stringify(error))
     ElMessage.error('无法连接到服务器')
   } finally {
     loading.value = false
@@ -273,14 +313,9 @@ const handleSearch = async () => {
   }
 }
 
-// ✨✨✨ 5. 修改创建逻辑：不再依赖 collection.value ✨✨✨
+// 修改创建逻辑：集合不再是必填项
 const createRecord = async () => {
   if (!newRecord.value.title.trim()) return ElMessage.warning('请输入标题')
-  
-  // 校验是否选择了集合
-  if (!newRecord.value.collectionId) {
-    return ElMessage.warning('请选择该记录所属的集合')
-  }
 
   creating.value = true
   try {
@@ -288,16 +323,25 @@ const createRecord = async () => {
       title: newRecord.value.title,
       contentType: newRecord.value.contentType,
       content: newRecord.value.content,
-      // 使用用户在下拉框中选择的 collectionId
-      collectionId: newRecord.value.collectionId, 
       tagIds: newRecord.value.tagIds
     }
 
-    await recordsApi.createRecord(payload)
+    // 创建记录
+    const createdRecord = await recordsApi.createRecord(payload)
+    
+    // 如果用户选择了集合，建立多对多关系
+    if (newRecord.value.collectionId) {
+      await collectionsApi.addRecordToCollection(newRecord.value.collectionId, createdRecord.id)
+      // 更新集合数据
+      if (updateCollections) updateCollections()
+    }
     
     ElMessage.success('创建成功')
     createDialogVisible.value = false
     loadRecords()
+    
+    // 更新悬浮记录
+    if (updateRecords) updateRecords()
   } catch (error) {
     console.error(error)
     ElMessage.error('创建失败')
@@ -313,6 +357,9 @@ const deleteRecord = (record) => {
         await recordsApi.deleteRecord(record.id)
         ElMessage.success('删除成功')
         loadRecords()
+        
+        // 更新悬浮记录
+        if (updateRecords) updateRecords()
       } catch (error) {
         ElMessage.error('删除失败')
       }
@@ -335,11 +382,30 @@ const resetForm = () => {
 
 const viewRecord = (row) => { currentRecord.value = { ...row }; viewDialogVisible.value = true }
 
+// 检查并应用URL参数中的筛选条件
+const checkFilterParams = () => {
+  if (route.query.filter) {
+    try {
+      const filterParams = JSON.parse(decodeURIComponent(route.query.filter))
+      console.log('从URL参数获取到的筛选条件:', filterParams)
+      if (filterParams.keyword) {
+        searchKeyword.value = filterParams.keyword
+        handleSearch()
+      }
+    } catch (error) {
+      console.error('解析筛选参数失败:', error)
+    }
+  }
+}
+
 // 初始化
 onMounted(() => {
   loadRecords()
   loadTags()
   loadCollections() // ✨✨✨ 7. 页面加载时获取集合列表
+  
+  // 检查URL参数中的筛选条件
+  checkFilterParams()
 })
 </script>
 

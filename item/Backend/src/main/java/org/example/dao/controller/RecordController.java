@@ -14,6 +14,7 @@ import org.example.dao.service.RecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -69,34 +70,48 @@ public class RecordController {
     }
 
     // 创建新记录
-     @PostMapping
+    @PostMapping
     @Operation(summary = "创建新记录", description = "创建一个新的记录")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "创建成功"),
             @ApiResponse(responseCode = "400", description = "请求参数错误"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public Record createRecord(@RequestBody Record record) {
+    public Record createRecord(@RequestBody Map<String, Object> requestBody) {
         System.out.println("====== [调试开始] 接收到创建请求 ======");
         try {
-            // 1. 打印接收到的数据，检查有没有字段是 null
-            System.out.println("标题: " + record.getTitle());
-            System.out.println("集合ID: " + record.getCollectionId());
-            System.out.println("内容类型: " + record.getContentType());
+            // 1. 创建Record对象
+            Record record = new Record();
+            record.setTitle((String) requestBody.get("title"));
+            record.setContent((String) requestBody.get("content"));
             
-            // 2. 手动补全时间 (防止因时间为 null 导致的报错)
-            if (record.getCreateTime() == null) record.setCreateTime(new java.util.Date());
-            if (record.getUpdateTime() == null) record.setUpdateTime(new java.util.Date());
+            // 2. 设置内容类型
+            String contentType = (String) requestBody.get("contentType");
+            System.out.println("接收到的内容类型: " + contentType);
+            record.setContentType(contentType != null ? contentType : "TEXT");
             
-            // 3. 检查 Service 是否注入成功
+            // 3. 设置时间
+            Date now = new Date();
+            record.setCreateTime(now);
+            record.setUpdateTime(now);
+            
+            // 4. 检查Service是否注入成功
             if (recordService == null) {
                 throw new RuntimeException("严重错误：RecordService 注入失败，为 null！");
             }
 
-            // 4. 执行业务逻辑
+            // 5. 执行业务逻辑保存记录
             System.out.println("正在调用 Service 保存数据...");
             recordService.createRecord(record);
             
+            // 6. 处理标签关联
+            List<Integer> tagIds = (List<Integer>) requestBody.get("tagIds");
+            if (tagIds != null && !tagIds.isEmpty()) {
+                System.out.println("接收到的标签ID: " + tagIds);
+                recordService.addTagsToRecord(record.getId(), tagIds);
+            }
+            
+            // 7. 返回保存的记录
             System.out.println("====== [调试结束] 创建成功，ID: " + record.getId() + " ======");
             return record;
 

@@ -1,6 +1,7 @@
 package org.example.dao.service;
 
 import org.example.dao.pojo.CollectionEntity;
+import org.example.dao.pojo.Record;
 
 import java.util.List;
 
@@ -19,4 +20,16 @@ public interface CollectionService {
     
     // 删除集合
     void deleteCollection(Integer id);
+    
+    // 根据集合ID获取记录列表
+    List<Record> findRecordsByCollectionId(Integer collectionId);
+    
+    // 将记录添加到集合
+    void addRecordToCollection(Integer recordId, Integer collectionId);
+    
+    // 将记录从集合移除
+    void removeRecordFromCollection(Integer recordId, Integer collectionId);
+    
+    // 合并集合
+    void mergeCollections(Integer targetCollectionId, List<Integer> sourceCollectionIds);
 }
