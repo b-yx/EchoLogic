@@ -1,12 +1,15 @@
 package org.example.dao.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashMap;
 
 import org.example.dao.pojo.Record;
 
@@ -19,53 +22,96 @@ import java.util.Collections;
 public class AIService {
 
     private final WebClient webClient;
+    private final ObjectMapper objectMapper;
+    
+    @Value("${ai.deepseek.api-key}")
+    private String deepseekApiKey;
 
-    // 注入WebClient
+    // 注入WebClient和ObjectMapper
     @Autowired
-    public AIService(WebClient webClient) {
+    public AIService(WebClient webClient, ObjectMapper objectMapper) {
         this.webClient = webClient;
+        this.objectMapper = objectMapper;
     }
 
-    // ----------- 核心方法：调用 DeepSeek API -----------
-    private String callDeepSeekApi(String prompt, String text) {
-        // 使用DeepSeek-Coder模型或其他Chat模型
-        String model = "deepseek-chat";
+    /**
+     * 调用DeepSeek API的核心方法（重载版本，用于向后兼容）
+     */
+    public String callDeepSeekApi(String prompt, String text) {
+        return callDeepSeekApi(prompt, text, null, null);
+    }
+    
+    /**
+     * 调用DeepSeek API的核心方法（完整版本）
+     */
+    public String callDeepSeekApi(String userPrompt, String inputDescription, Integer recordsCount, String deepseekApiKey) {
+        // 如果没有提供API key，使用注入的配置值
+        if (deepseekApiKey == null) {
+            deepseekApiKey = this.deepseekApiKey;
+            // 如果配置值也没有，尝试环境变量
+            if (deepseekApiKey == null) {
+                deepseekApiKey = System.getenv("DEEPSEEK_API_KEY");
+                // 如果环境变量也没有，使用默认值（实际项目中不应该这样做）
+                if (deepseekApiKey == null) {
+                    deepseekApiKey = "your-default-api-key";
+                }
+            }
+        }
 
-        // DeepSeek/OpenAI API 的标准请求体结构
+        // 构建消息列表
         List<Map<String, String>> messages = new ArrayList<>();
-        messages.add(Map.of("role", "system", "content", prompt));
-        messages.add(Map.of("role", "user", "content", text));
-        
-        Map<String, Object> requestBody = Map.of(
-                "model", model,
-                "messages", messages,
-                "temperature", 0.3 // 保持较低温度以获取稳定结果
-        );
+        Map<String, String> systemMessage = new HashMap<>();
+        systemMessage.put("role", "system");
+        systemMessage.put("content", "You are a helpful assistant.");
+        messages.add(systemMessage);
 
-        // 发送请求
-        Mono<Map> responseMono = webClient.post()
-                .body(BodyInserters.fromValue(requestBody))
-                .retrieve()
-                .bodyToMono(Map.class)
-                .onErrorResume(e -> {
-                    System.err.println("调用 DeepSeek API 失败: " + e.getMessage());
-                    // 返回一个包含默认错误信息的结构，防止后续代码解析崩溃
-                    return Mono.just(Map.of("choices", List.of(
-                            Map.of("message", Map.of("content", "[]"))
-                    )));
-                });
+        Map<String, String> userMessage = new HashMap<>();
+        userMessage.put("role", "user");
+        // 如果有inputDescription，将其添加到userPrompt中
+        String fullContent = userPrompt;
+        if (inputDescription != null) {
+            fullContent += "\n\n" + inputDescription;
+        }
+        userMessage.put("content", fullContent);
+        messages.add(userMessage);
 
-        // 阻塞获取结果，设置超时时间，防止长时间等待
-        Map result = responseMono.block(java.time.Duration.ofSeconds(30));
+        // 构建请求体
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", "deepseek-chat");
+        requestBody.put("messages", messages);
+        requestBody.put("temperature", 0.7);
+        requestBody.put("max_tokens", 1024);
+        requestBody.put("top_p", 0.95);
+        requestBody.put("frequency_penalty", 0.0);
+        requestBody.put("presence_penalty", 0.0);
 
         try {
-            // 提取结果：choices[0].message.content
-            List<Map<String, Object>> choices = (List<Map<String, Object>>) result.get("choices");
-            Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
-            return (String) message.get("content");
+            // 发送请求
+            String response = webClient.post()
+                    .uri("https://api.deepseek.com/v1/chat/completions")
+                    .header("Authorization", "Bearer " + deepseekApiKey)
+                    .header("Content-Type", "application/json")
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+
+            // 解析响应
+            JsonNode rootNode = objectMapper.readTree(response);
+            JsonNode choicesNode = rootNode.get("choices");
+            if (choicesNode != null && choicesNode.isArray() && choicesNode.size() > 0) {
+                JsonNode messageNode = choicesNode.get(0).get("message");
+                if (messageNode != null) {
+                    JsonNode contentNode = messageNode.get("content");
+                    if (contentNode != null) {
+                        return contentNode.asText();
+                    }
+                }
+            }
+            return "Failed to parse response";
         } catch (Exception e) {
-            System.err.println("解析 DeepSeek 响应失败: " + e.getMessage());
-            return "[]";
+            e.printStackTrace();
+            return "Error calling DeepSeek API: " + e.getMessage();
         }
     }
 

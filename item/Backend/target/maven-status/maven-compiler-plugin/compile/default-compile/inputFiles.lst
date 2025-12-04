@@ -4,10 +4,15 @@ D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\j
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\config\WebConfig.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\controller\AIController.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\controller\CollectionController.java
+D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\controller\ContentController.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\controller\GrowthController.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\controller\RecordController.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\controller\TagxController.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\DaoApplication.java
+D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\dto\GenerateRequest.java
+D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\dto\GenerateResponse.java
+D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\dto\ParseUrlRequest.java
+D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\dto\RefineRequest.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\mapper\CollectionMapper.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\mapper\DailyTaskMapper.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\mapper\RecordCollectionMapper.java
@@ -16,6 +21,7 @@ D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\j
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\mapper\UserAchievementMapper.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\mapper\UserBehaviorMapper.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\mapper\UserDailyTaskMapper.java
+D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\mapper\WebContentMapper.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\pojo\CollectionEntity.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\pojo\DailyTask.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\pojo\MergeCollectionsRequest.java
@@ -25,6 +31,8 @@ D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\j
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\pojo\UserAchievement.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\pojo\UserBehavior.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\pojo\UserDailyTask.java
+D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\pojo\WebContent.java
+D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\service\AIGenerationService.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\service\AIService.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\service\CollectionService.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\service\DailyTaskService.java
@@ -38,3 +46,4 @@ D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\j
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\service\TagxService.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\service\UserAchievementService.java
 D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\service\UserBehaviorService.java
+D:\文件夹\大三上\软件工程\大作业2\EchoLogic\item\Backend\src\main\java\org\example\dao\service\WebParseService.java
