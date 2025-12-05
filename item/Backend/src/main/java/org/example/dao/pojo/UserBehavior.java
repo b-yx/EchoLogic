@@ -19,7 +19,10 @@ public class UserBehavior {
     private LocalDateTime createTime;
 
     public enum BehaviorType {
-        COLLECT, // 收藏
-        INCUBATE // 孵化
+        COLLECT,
+        INCUBATE,
+        VIEW,
+        EDIT,
+        GATHER
     }
 }

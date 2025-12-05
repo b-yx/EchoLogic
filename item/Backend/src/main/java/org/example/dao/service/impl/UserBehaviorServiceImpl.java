@@ -53,4 +53,20 @@ public class UserBehaviorServiceImpl implements UserBehaviorService {
         }
         return userBehaviorMapper.countByDateRangeGroupedByDay(userId, startTime, endTime);
     }
+
+    @Override
+    public Map<String, Long> getItemBehaviorCounts(Long relatedId, Long userId) {
+        List<Map<String, Object>> rows = userId == null
+                ? userBehaviorMapper.countByRelatedId(relatedId)
+                : userBehaviorMapper.countByRelatedIdAndUser(relatedId, userId);
+        Map<String, Long> result = new java.util.HashMap<>();
+        for (Map<String, Object> row : rows) {
+            Object type = row.get("type");
+            Object count = row.get("count");
+            if (type != null && count != null) {
+                result.put(String.valueOf(type), Long.valueOf(String.valueOf(count)));
+            }
+        }
+        return result;
+    }
 }

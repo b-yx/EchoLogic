@@ -23,32 +23,34 @@ public class UserAchievementServiceImpl implements UserAchievementService {
 
     @Override
     public void updateAchievementProgress(Long userId, UserBehavior.BehaviorType behaviorType) {
-        // 1. 找出该用户所有未解锁的成就
+        // 1. 找出与该行为类型相关且用户尚未解锁的成就
         QueryWrapper<UserAchievement> achievementQw = new QueryWrapper<>();
-        achievementQw.eq("user_id", userId).eq("is_unlocked", false);
+        achievementQw.eq("user_id", userId)
+                     .eq("behavior_type", behaviorType.name())
+                     .eq("is_unlocked", false);
         List<UserAchievement> achievements = userAchievementMapper.selectList(achievementQw);
 
-        if (achievements.isEmpty()) return;
+        if (achievements.isEmpty()) {
+            String keyword = behaviorType == UserBehavior.BehaviorType.COLLECT ? "收藏" : "孵化";
+            QueryWrapper<UserAchievement> fallbackQw = new QueryWrapper<>();
+            fallbackQw.eq("user_id", userId)
+                      .isNull("behavior_type")
+                      .like("achievement_name", keyword)
+                      .eq("is_unlocked", false);
+            achievements = userAchievementMapper.selectList(fallbackQw);
+            if (achievements.isEmpty()) return;
+        }
 
-        // 2. 根据行为类型，更新相关成就进度
         for (UserAchievement achievement : achievements) {
-            // 简单示例：如果成就是关于收藏的
-            if (achievement.getAchievementName().contains("收藏") && behaviorType == UserBehavior.BehaviorType.COLLECT) {
-                // 统计总收藏数
-                QueryWrapper<UserBehavior> behaviorQw = new QueryWrapper<>();
-                behaviorQw.eq("user_id", userId).eq("behavior_type", UserBehavior.BehaviorType.COLLECT);
-                Long totalCollects = userBehaviorMapper.selectCount(behaviorQw);
-
-                achievement.setCurrentValue(totalCollects.intValue());
-
-                // 3. 判断是否解锁
-                if (achievement.getCurrentValue() >= achievement.getConditionValue()) {
-                    achievement.setIsUnlocked(true);
-                    achievement.setUnlockTime(LocalDateTime.now());
-                }
-                userAchievementMapper.updateById(achievement);
+            if (achievement.getBehaviorType() == null) {
+                achievement.setBehaviorType(behaviorType);
             }
-            // ...可以扩展其他成就类型的判断逻辑
+            achievement.setCurrentValue(achievement.getCurrentValue() + 1);
+            if (achievement.getCurrentValue() >= achievement.getConditionValue()) {
+                achievement.setIsUnlocked(true);
+                achievement.setUnlockTime(LocalDateTime.now());
+            }
+            userAchievementMapper.updateById(achievement);
         }
     }
 

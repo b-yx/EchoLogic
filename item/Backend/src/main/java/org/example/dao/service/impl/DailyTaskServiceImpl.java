@@ -10,8 +10,10 @@ import org.example.dao.service.DailyTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.stream.Collectors;
+import java.time.LocalDate;
+import java.util.List;
+
 
 @Service
 public class DailyTaskServiceImpl implements DailyTaskService {
@@ -22,46 +24,85 @@ public class DailyTaskServiceImpl implements DailyTaskService {
     @Autowired
     private UserDailyTaskMapper userDailyTaskMapper;
 
+    @Autowired
+    private org.example.dao.service.UserQuotaService userQuotaService;
+
     @Override
     public List<UserDailyTask> getTodayTasks(Long userId) {
-        // 简单实现：假设每日任务在用户首次查询时初始化
+        LocalDate today = LocalDate.now();
         QueryWrapper<UserDailyTask> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("user_id", userId);
-        // 实际项目中，需要加入日期判断，这里简化
-        if (userDailyTaskMapper.selectCount(queryWrapper) == 0) {
+        queryWrapper.eq("user_id", userId).eq("create_date", today);
+        List<UserDailyTask> todayTasks = userDailyTaskMapper.selectList(queryWrapper);
+
+        if (todayTasks.isEmpty()) {
+            // 初始化今日任务
             List<DailyTask> allTasks = dailyTaskMapper.selectList(null);
-            List<UserDailyTask> userTasks = allTasks.stream().map(task -> {
+            todayTasks = allTasks.stream().map(task -> {
                 UserDailyTask userTask = new UserDailyTask();
                 userTask.setUserId(userId);
                 userTask.setTaskId(task.getId());
+                userTask.setCreateDate(today);
                 userTask.setCurrentCount(0);
                 userTask.setIsCompleted(false);
                 userTask.setRewardReceived(false);
                 userDailyTaskMapper.insert(userTask);
                 return userTask;
             }).collect(Collectors.toList());
-            return userTasks;
         }
-        return userDailyTaskMapper.selectList(queryWrapper);
+        return todayTasks;
     }
 
     @Override
     public void updateTaskProgress(Long userId, UserBehavior.BehaviorType behaviorType) {
-        // 根据行为类型找到对应的任务并更新
-        // 此处简化逻辑，实际应根据 behaviorType 匹配具体任务
-        // 例如：COLLECT -> "今日收藏3条内容"
+        // 1. 查找与行为类型匹配的每日任务模板
+        QueryWrapper<DailyTask> taskQw = new QueryWrapper<>();
+        taskQw.eq("behavior_type", behaviorType.name());
+        DailyTask task = dailyTaskMapper.selectOne(taskQw);
+
+        if (task == null) return;
+
+        // 2. 查找用户今天的对应任务
+        LocalDate today = LocalDate.now();
+        QueryWrapper<UserDailyTask> userTaskQw = new QueryWrapper<>();
+        userTaskQw.eq("user_id", userId)
+                  .eq("task_id", task.getId())
+                  .eq("create_date", today);
+        UserDailyTask userTask = userDailyTaskMapper.selectOne(userTaskQw);
+
+        if (userTask == null) {
+            userTask = new UserDailyTask();
+            userTask.setUserId(userId);
+            userTask.setTaskId(task.getId());
+            userTask.setCreateDate(today);
+            userTask.setCurrentCount(1);
+            userTask.setIsCompleted(userTask.getCurrentCount() >= task.getTargetCount());
+            userTask.setRewardReceived(false);
+            userDailyTaskMapper.insert(userTask);
+            return;
+        }
+
+        if (!userTask.getIsCompleted()) {
+            userTask.setCurrentCount(userTask.getCurrentCount() + 1);
+            if (userTask.getCurrentCount() >= task.getTargetCount()) {
+                userTask.setIsCompleted(true);
+            }
+            userDailyTaskMapper.updateById(userTask);
+        }
     }
 
     @Override
     public boolean receiveReward(Long userId, Long taskId) {
         QueryWrapper<UserDailyTask> qw = new QueryWrapper<>();
-        qw.eq("user_id", userId).eq("task_id", taskId);
+        qw.eq("user_id", userId).eq("task_id", taskId).eq("create_date", LocalDate.now());
         UserDailyTask userTask = userDailyTaskMapper.selectOne(qw);
 
         if (userTask != null && userTask.getIsCompleted() && !userTask.getRewardReceived()) {
             userTask.setRewardReceived(true);
             userDailyTaskMapper.updateById(userTask);
-            // 此处应调用用户服务，为用户增加AI次数等奖励
+            DailyTask task = dailyTaskMapper.selectById(taskId);
+            if (task != null && task.getReward() != null) {
+                userQuotaService.addQuota(userId, task.getReward());
+            }
             return true;
         }
         return false;

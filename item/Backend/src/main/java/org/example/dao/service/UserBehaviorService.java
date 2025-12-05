@@ -8,4 +8,5 @@ import java.util.Map;
 public interface UserBehaviorService {
     void recordBehavior(Long userId, UserBehavior.BehaviorType type, Long relatedId);
     List<Map<String, Object>> getBehaviorStats(Long userId, String timeRange);
+    Map<String, Long> getItemBehaviorCounts(Long relatedId, Long userId);
 }

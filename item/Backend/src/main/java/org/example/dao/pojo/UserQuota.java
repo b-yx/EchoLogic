@@ -5,17 +5,11 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import java.time.LocalDate;
-
 @Data
-@TableName("user_daily_task")
-public class UserDailyTask {
+@TableName("user_ai_quota")
+public class UserQuota {
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long userId;
-    private Long taskId;
-    private LocalDate createDate;
-    private Integer currentCount;
-    private Boolean isCompleted;
-    private Boolean rewardReceived;
+    private Integer quota;
 }

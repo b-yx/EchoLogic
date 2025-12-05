@@ -13,6 +13,7 @@ public class DailyTask {
     @TableId(type = IdType.AUTO)
     private Long id;
     private String taskName;
+    private UserBehavior.BehaviorType behaviorType;
     private Integer targetCount;
     private Integer reward; // 奖励的AI使用次数
     private LocalDateTime createTime;

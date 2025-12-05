@@ -25,4 +25,10 @@ public interface UserBehaviorMapper extends BaseMapper<UserBehavior> {
             @Param("userId") Long userId,
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime);
+
+    @Select("SELECT behavior_type as type, COUNT(*) as count FROM user_behavior WHERE related_id = #{relatedId} GROUP BY behavior_type")
+    List<Map<String, Object>> countByRelatedId(@Param("relatedId") Long relatedId);
+
+    @Select("SELECT behavior_type as type, COUNT(*) as count FROM user_behavior WHERE related_id = #{relatedId} AND user_id = #{userId} GROUP BY behavior_type")
+    List<Map<String, Object>> countByRelatedIdAndUser(@Param("relatedId") Long relatedId, @Param("userId") Long userId);
 }

@@ -54,7 +54,7 @@ public class CollectionServiceImpl implements CollectionService {
         // 假设 userId 可以从 collection 对象中获取，如果不能，需要调整
         // Long userId = collection.getCreatorId(); 
         Long userId = 1L; // 暂时硬编码为 1L，需要根据实际情况修改
-        userBehaviorService.recordBehavior(userId, UserBehavior.BehaviorType.COLLECT, collection.getId().longValue());
+        userBehaviorService.recordBehavior(userId, UserBehavior.BehaviorType.INCUBATE, collection.getId().longValue());
     }
 
     @Override
@@ -160,6 +160,8 @@ public class CollectionServiceImpl implements CollectionService {
     @Override
     public void addRecordToCollection(Integer recordId, Integer collectionId) {
         recordCollectionMapper.addRecordToCollection(recordId, collectionId);
+        Long userId = 1L; // 暂时硬编码为 1L，需要根据实际情况修改
+        userBehaviorService.recordBehavior(userId, UserBehavior.BehaviorType.GATHER, collectionId.longValue());
     }
     
     @Override

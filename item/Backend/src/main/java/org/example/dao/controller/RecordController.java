@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.dao.pojo.Record;
 import org.example.dao.pojo.Tagx;
 import org.example.dao.service.RecordService;
+import org.example.dao.service.UserBehaviorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +26,9 @@ public class RecordController {
 
     @Autowired
     private RecordService recordService;
+
+    @Autowired
+    private UserBehaviorService userBehaviorService;
 
     // 获取所有记录
     @GetMapping
@@ -51,7 +55,9 @@ public class RecordController {
             @ApiResponse(responseCode = "404", description = "记录不存在")
     })
     public Record getRecordById(@PathVariable Integer id) {
-        return recordService.findById(id);
+        Record record = recordService.findById(id);
+        userBehaviorService.recordBehavior(1L, org.example.dao.pojo.UserBehavior.BehaviorType.VIEW, id.longValue());
+        return record;
     }
 
     // 根据集合ID获取记录列表
@@ -150,6 +156,7 @@ public class RecordController {
         System.out.println("接收到的请求体中content: " + (record != null ? record.getContent() : "null"));
         record.setId(id);
         recordService.updateRecord(record);
+        userBehaviorService.recordBehavior(1L, org.example.dao.pojo.UserBehavior.BehaviorType.EDIT, id.longValue());
         System.out.println("=== 更新记录请求处理完成 ===");
     }
 
