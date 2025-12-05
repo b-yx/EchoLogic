@@ -14,14 +14,17 @@ public interface RecordMapper {
     // 根据ID查询记录
     @Select("SELECT * FROM record WHERE id = #{id}")
     Record findById(Integer id);
+
+    @Select("SELECT * FROM record WHERE source_url = #{sourceUrl} LIMIT 1")
+    Record findBySourceUrl(String sourceUrl);
     
     // 添加记录
-    @Insert("INSERT INTO record(title, content, content_type, create_time, update_time, deleted) VALUES(#{title}, #{content}, #{contentType}, #{createTime}, #{updateTime}, #{deleted})")
+    @Insert("INSERT INTO record(title, content, content_type, source_type, source_url, source_file_path, create_time, update_time, deleted) VALUES(#{title}, #{content}, #{contentType}, #{sourceType}, #{sourceUrl}, #{sourceFilePath}, #{createTime}, #{updateTime}, #{deleted})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insert(Record record);
     
     // 更新记录
-    @Update("UPDATE record SET title = #{title}, content = #{content}, content_type = #{contentType}, update_time = #{updateTime}, deleted = #{deleted} WHERE id = #{id}")
+    @Update("UPDATE record SET title = #{title}, content = #{content}, content_type = #{contentType}, source_type = #{sourceType}, source_url = #{sourceUrl}, source_file_path = #{sourceFilePath}, update_time = #{updateTime}, deleted = #{deleted} WHERE id = #{id}")
     int update(Record record);
     
     // 删除记录（软删除）
@@ -51,4 +54,17 @@ public interface RecordMapper {
     // 清空记录的所有标签
     @Delete("DELETE FROM record_tag WHERE record_id = #{recordId}")
     void clearRecordTags(Integer recordId);
+
+    @Select("""
+            SELECT r.*
+            FROM record r
+            JOIN record_tag rt ON r.id = rt.record_id
+            WHERE rt.tag_id IN (SELECT tag_id FROM record_tag WHERE record_id = #{recordId})
+              AND r.id <> #{recordId}
+              AND r.deleted = false
+            GROUP BY r.id
+            ORDER BY COUNT(*) DESC, r.update_time DESC
+            LIMIT 5
+            """)
+    List<Record> findSimilarByTags(Integer recordId);
 }

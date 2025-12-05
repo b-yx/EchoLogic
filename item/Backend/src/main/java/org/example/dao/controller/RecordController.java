@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.example.dao.dto.QuickCaptureRequest;
 import org.example.dao.pojo.Record;
 import org.example.dao.pojo.Tagx;
 import org.example.dao.service.RecordService;
@@ -220,6 +221,22 @@ public class RecordController {
     public List<Tagx> getRecordTags(@PathVariable Integer recordId) {
         return recordService.findRecordTags(recordId);
     }
+
+    @PostMapping("/quick-capture")
+    @Operation(summary = "快速收藏/采集", description = "支持文本输入、拖拽URL、拖拽文件路径")
+    @ApiResponse(responseCode = "200", description = "创建成功",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = Record.class)))
+    public Record quickCapture(@RequestBody QuickCaptureRequest request) {
+        return recordService.quickCapture(
+                request.getType(),
+                request.getText(),
+                request.getUrl(),
+                request.getFilePath(),
+                request.getTitle(),
+                request.getTagIds()
+        );
+    }
     
     // 搜索记录
     @GetMapping("/search")
@@ -272,5 +289,15 @@ public class RecordController {
                     schema = @Schema(implementation = Tagx.class)))
     public List<Tagx> generateTagRecommendations(@PathVariable Integer id) {
         return recordService.generateTagRecommendations(id);
+    }
+
+    @GetMapping("/{id}/recommendations")
+    @Operation(summary = "推荐相似记录", description = "基于标签重合，推荐相似内容")
+    @Parameter(name = "id", description = "记录ID", required = true)
+    @ApiResponse(responseCode = "200", description = "推荐成功",
+            content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = Record.class)))
+    public List<Record> recommendSimilar(@PathVariable Integer id) {
+        return recordService.recommendSimilar(id);
     }
 }

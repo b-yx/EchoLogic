@@ -14,6 +14,9 @@ public class Record {
     private String title;  // 记录标题
     private String content;  // 记录的文本内容
     private String contentType;  // 记录类型
+    private String sourceType; // 数据来源类型：TEXT/URL/FILE
+    private String sourceUrl; // 若为链接收藏，存URL
+    private String sourceFilePath; // 若为文件拖拽，存文件路径
     private Date createTime;  // 创建时间
     private Date updateTime;  // 更新时间
     private Boolean deleted = false;  // 是否删除（用于软删除）

@@ -54,4 +54,10 @@ public interface RecordService {
     
     // 获取所有记录（用于AI筛选）
     List<Record> getAllRecords();
+
+    // 快速采集（文本/URL/文件）
+    Record quickCapture(String type, String text, String url, String filePath, String title, List<Integer> tagIds);
+
+    // 推荐相似记录（基于标签重合）
+    List<Record> recommendSimilar(Integer recordId);
 }

@@ -7,8 +7,10 @@ import org.example.dao.pojo.Record;
 import org.example.dao.pojo.Tagx;
 import org.example.dao.service.RecordService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Date;
 import java.util.List;
@@ -48,20 +50,7 @@ public class RecordServiceImpl implements RecordService {
     @Override
     public void createRecord(Record record) {
         // 验证必填字段
-        if (record.getTitle() == null || record.getTitle().trim().isEmpty()) {
-            throw new IllegalArgumentException("标题不能为空");
-        }
-        if (record.getContent() == null || record.getContent().trim().isEmpty()) {
-            throw new IllegalArgumentException("内容不能为空");
-        }
-        // 如果记录类型为空，设置默认值为"TEXT"
-        if (record.getContentType() == null || record.getContentType().trim().isEmpty()) {
-            System.out.println("记录类型为空，设置默认值为'TEXT'");
-            record.setContentType("TEXT");
-        } else {
-            // 统一contentType的大小写为大写
-            record.setContentType(record.getContentType().toUpperCase());
-        }
+        prepareRecordBeforeSave(record);
 
         
         // 设置创建时间和更新时间
@@ -127,6 +116,9 @@ public class RecordServiceImpl implements RecordService {
         if (record.getContentType() == null || record.getContentType().trim().isEmpty()) {
             record.setContentType("text");
             System.out.println("contentType为空，设置默认值为text");
+        }
+        if (record.getSourceType() == null || record.getSourceType().trim().isEmpty()) {
+            record.setSourceType(record.getContentType().toUpperCase());
         }
         
         // 执行更新
@@ -236,5 +228,102 @@ public class RecordServiceImpl implements RecordService {
     @Override
     public List<Record> getAllRecords() {
         return recordMapper.findAll();
+    }
+
+    @Transactional
+    @Override
+    public Record quickCapture(String type, String text, String url, String filePath, String title, List<Integer> tagIds) {
+        Record record = new Record();
+        String normalizedType = (type == null || type.isBlank()) ? "TEXT" : type.toUpperCase();
+        record.setContentType(normalizedType);
+        record.setSourceType(normalizedType);
+
+        if ("URL".equals(normalizedType)) {
+            if (url == null || url.isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "URL不能为空");
+            }
+            // 去重：URL 完全相同则阻止保存
+            Record existing = recordMapper.findBySourceUrl(url);
+            if (existing != null && Boolean.FALSE.equals(existing.getDeleted())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "该链接已收藏");
+            }
+            record.setSourceUrl(url);
+            record.setContent(url);
+            record.setTitle(title != null && !title.isBlank() ? title : "链接收藏");
+        } else if ("FILE".equals(normalizedType)) {
+            if (filePath == null || filePath.isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "文件路径不能为空");
+            }
+            record.setSourceFilePath(filePath);
+            record.setContent(filePath);
+            record.setTitle(title != null && !title.isBlank() ? title : "文件收藏");
+        } else {
+            if (text == null || text.isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "内容不能为空");
+            }
+            record.setContent(text);
+            record.setTitle(title != null && !title.isBlank() ? title : text.substring(0, Math.min(text.length(), 20)));
+        }
+
+        createRecord(record);
+
+        if (tagIds != null && !tagIds.isEmpty()) {
+            addTagsToRecord(record.getId(), tagIds);
+        }
+        return record;
+    }
+
+    @Override
+    public List<Record> recommendSimilar(Integer recordId) {
+        return recordMapper.findSimilarByTags(recordId);
+    }
+
+    /**
+     * 统一校验/填充字段，包含去重与来源字段设置
+     */
+    private void prepareRecordBeforeSave(Record record) {
+        if (record == null) {
+            throw new IllegalArgumentException("记录对象不能为空");
+        }
+        if (record.getTitle() == null || record.getTitle().trim().isEmpty()) {
+            throw new IllegalArgumentException("标题不能为空");
+        }
+
+        // 默认 TEXT
+        String ct = (record.getContentType() == null || record.getContentType().isBlank()) ? "TEXT" : record.getContentType().toUpperCase();
+        record.setContentType(ct);
+        if (record.getSourceType() == null || record.getSourceType().isBlank()) {
+            record.setSourceType(ct);
+        }
+
+        switch (ct) {
+            case "URL" -> {
+                if (record.getSourceUrl() == null || record.getSourceUrl().isBlank()) {
+                    throw new IllegalArgumentException("URL不能为空");
+                }
+                // 去重
+                Record existing = recordMapper.findBySourceUrl(record.getSourceUrl());
+                if (existing != null && Boolean.FALSE.equals(existing.getDeleted())) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "该链接已保存");
+                }
+                // 兜底将内容写为URL
+                if (record.getContent() == null || record.getContent().isBlank()) {
+                    record.setContent(record.getSourceUrl());
+                }
+            }
+            case "FILE" -> {
+                if (record.getSourceFilePath() == null || record.getSourceFilePath().isBlank()) {
+                    throw new IllegalArgumentException("文件路径不能为空");
+                }
+                if (record.getContent() == null || record.getContent().isBlank()) {
+                    record.setContent(record.getSourceFilePath());
+                }
+            }
+            default -> {
+                if (record.getContent() == null || record.getContent().trim().isEmpty()) {
+                    throw new IllegalArgumentException("内容不能为空");
+                }
+            }
+        }
     }
 }
