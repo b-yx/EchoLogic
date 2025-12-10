@@ -5,9 +5,7 @@ import org.example.dao.mapper.RecordMapper;
 import org.example.dao.mapper.RecordCollectionMapper;
 import org.example.dao.pojo.CollectionEntity;
 import org.example.dao.pojo.Record;
-import org.example.dao.pojo.UserBehavior;
 import org.example.dao.service.CollectionService;
-import org.example.dao.service.UserBehaviorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,8 +29,7 @@ public class CollectionServiceImpl implements CollectionService {
     @Autowired
     private RecordCollectionMapper recordCollectionMapper;
 
-    @Autowired
-    private UserBehaviorService userBehaviorService;
+
 
     @Override
     public List<CollectionEntity> findAll() {
@@ -50,11 +47,6 @@ public class CollectionServiceImpl implements CollectionService {
         collection.setCreateTime(now);
         collection.setUpdateTime(now);
         collectionMapper.insert(collection);
-
-        // 假设 userId 可以从 collection 对象中获取，如果不能，需要调整
-        // Long userId = collection.getCreatorId(); 
-        Long userId = 1L; // 暂时硬编码为 1L，需要根据实际情况修改
-        userBehaviorService.recordBehavior(userId, UserBehavior.BehaviorType.INCUBATE, collection.getId().longValue());
     }
 
     @Override
@@ -161,7 +153,6 @@ public class CollectionServiceImpl implements CollectionService {
     public void addRecordToCollection(Integer recordId, Integer collectionId) {
         recordCollectionMapper.addRecordToCollection(recordId, collectionId);
         Long userId = 1L; // 暂时硬编码为 1L，需要根据实际情况修改
-        userBehaviorService.recordBehavior(userId, UserBehavior.BehaviorType.GATHER, collectionId.longValue());
     }
     
     @Override
@@ -171,7 +162,7 @@ public class CollectionServiceImpl implements CollectionService {
     
     @Override
     @Transactional
-    public void mergeCollections(Integer targetCollectionId, List<Integer> sourceCollectionIds) {
+    public void mergeCollections(Integer targetCollectionId, List<Integer> sourceCollectionIds, String name, String description) {
         // 获取目标集合已有的记录ID
         List<Integer> existingRecordIds = recordCollectionMapper.findRecordsByCollectionId(targetCollectionId);
         
@@ -192,10 +183,23 @@ public class CollectionServiceImpl implements CollectionService {
             deleteCollection(sourceCollectionId);
         }
         
-        // 更新目标集合的更新时间
+        // 更新目标集合的信息
         CollectionEntity targetCollection = findById(targetCollectionId);
         if (targetCollection != null) {
+            // 更新名称（如果提供了新名称）
+            if (name != null && !name.trim().isEmpty()) {
+                targetCollection.setName(name.trim());
+            }
+            
+            // 更新描述（如果提供了新描述）
+            if (description != null) {
+                targetCollection.setDescription(description);
+            }
+            
+            // 更新更新时间
             targetCollection.setUpdateTime(new Date());
+            
+            // 保存更新后的集合
             collectionMapper.update(targetCollection);
         }
     }

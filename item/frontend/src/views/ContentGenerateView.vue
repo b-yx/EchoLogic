@@ -48,29 +48,43 @@
           
           <el-tab-pane label="按集合选择" name="collection">
             <div class="collection-selection">
+              <div class="collection-intro">
+                <el-tag type="info">共 {{ collections.length }} 个集合</el-tag>
+                <span class="intro-text">选择集合后可加载该集合中的所有内容用于生成</span>
+              </div>
               <div class="collection-options">
                 <el-checkbox-group v-model="selectedCollectionIds">
                   <div v-for="collection in collections" :key="collection.id" class="collection-item">
-                    <el-checkbox :label="collection.id">{{ collection.name }}</el-checkbox>
-                    <el-button 
-                      size="small" 
-                      type="primary" 
-                      @click="selectAllInCollection(collection.id, false)"
-                    >
-                      全选本集合
-                    </el-button>
+                    <div class="collection-info">
+                      <el-checkbox :label="collection.id" class="collection-checkbox">
+                        <span class="collection-name">{{ collection.name }}</span>
+                      </el-checkbox>
+                      <div class="collection-actions">
+                        <el-button 
+                          size="small" 
+                          type="primary" 
+                          @click="selectAllInCollection(collection.id, false)"
+                        >
+                          全选
+                        </el-button>
+                      </div>
+                    </div>
+                    <div v-if="collection.description" class="collection-description">
+                      {{ collection.description }}
+                    </div>
                   </div>
                 </el-checkbox-group>
               </div>
               <div class="collection-selection-options">
-                <el-checkbox v-model="includeSubcollections">包含子集合</el-checkbox>
                 <el-button 
-                  type="primary" 
-                  @click="selectAllInSelectedCollections" 
-                  :disabled="selectedCollectionIds.length === 0"
-                >
-                  加载所选集合内容
-                </el-button>
+                    type="primary" 
+                    @click="selectAllInSelectedCollections" 
+                    :disabled="selectedCollectionIds.length === 0"
+                    size="large"
+                  >
+                    <el-icon><Plus /></el-icon>
+                    加载所选集合内容 ({{ selectedCollectionIds.length }})
+                  </el-button>
               </div>
             </div>
           </el-tab-pane>
@@ -91,10 +105,18 @@
                     v-for="tag in tags" 
                     :key="tag.id" 
                     :type="selectedTagIds.includes(tag.id) ? 'primary' : ''"
-                    :color="tag.color"
+                    :color="selectedTagIds.includes(tag.id) ? tag.color : ''"
+                    :effect="selectedTagIds.includes(tag.id) ? 'light' : 'plain'"
                     @click="toggleTagSelection(tag.id)"
+                    class="tag-item"
                   >
-                    {{ tag.name }}
+                    <template v-if="selectedTagIds.includes(tag.id)">
+                      <el-icon><Check /></el-icon>
+                      {{ tag.name }}
+                    </template>
+                    <template v-else>
+                      {{ tag.name }}
+                    </template>
                   </el-tag>
                 </el-checkbox-group>
               </div>
@@ -219,8 +241,7 @@
                 <span class="sender">{{ message.sender === 'ai' ? 'AI助手' : '我' }}</span>
                 <span class="timestamp">{{ formatTime(message.timestamp) }}</span>
               </div>
-              <div class="dialogue-content">
-                {{ message.content }}
+              <div class="dialogue-content" v-html="markdownToHtml(message.content)">
               </div>
             </div>
           </div>
@@ -231,8 +252,7 @@
               <span class="sender">AI助手</span>
               <span class="timestamp">{{ formatTime(latestGeneratedContent.timestamp) }}</span>
             </div>
-            <div class="dialogue-content generated-content">
-              {{ latestGeneratedContent.result }}
+            <div class="dialogue-content generated-content" v-html="markdownToHtml(latestGeneratedContent.result)">
             </div>
           </div>
         </div>
@@ -402,6 +422,7 @@ import recordsApi from '../api/records'
 import collectionsApi from '../api/collections'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import showdown from 'showdown'
+import { Plus, Check } from '@element-plus/icons-vue'
 
 // 状态变量
 const selectedContentIds = ref([])
@@ -470,7 +491,6 @@ const deleteHistoryRecord = (recordId) => {
 // 新增：集合选择相关
 const collections = ref([])
 const selectedCollectionIds = ref([])
-const includeSubcollections = ref(false)
 
 // 新增：标签筛选相关
 const tags = ref([])
@@ -1131,6 +1151,12 @@ const createNewTask = async () => {
   }
 }
 
+// 辅助函数：Markdown转HTML
+const markdownToHtml = (markdown) => {
+  const converter = new showdown.Converter()
+  return converter.makeHtml(markdown)
+}
+
 // 辅助函数
 const truncateText = (text, maxLength) => {
   if (!text) return ''
@@ -1260,31 +1286,121 @@ onMounted(() => {
 .collection-selection {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 20px;
+}
+
+.collection-intro {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 15px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #409eff;
+}
+
+.collection-intro .el-tag {
+  font-size: 12px;
+}
+
+.intro-text {
+  font-size: 13px;
+  color: #606266;
 }
 
 .collection-options {
   display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
+  flex-direction: column;
+  gap: 12px;
   margin-bottom: 15px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.collection-options::-webkit-scrollbar {
+  width: 6px;
+}
+
+.collection-options::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.collection-options::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.collection-options::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
 }
 
 .collection-item {
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fff;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.collection-item:hover {
+  border-color: #409eff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.collection-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.collection-checkbox {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px;
-  border: 1px solid #e0e0e0;
-  border-radius: 5px;
-  background-color: #fff;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.collection-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #303133;
+}
+
+.content-count-tag {
+  font-size: 11px;
+  padding: 2px 6px;
+}
+
+.collection-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.collection-description {
+  font-size: 12px;
+  color: #909396;
+  line-height: 1.5;
+  padding-left: 25px;
+  margin-top: 5px;
+  max-height: 40px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .collection-selection-options {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 15px;
   margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #e0e0e0;
 }
 
 /* 新增：标签选择样式 */

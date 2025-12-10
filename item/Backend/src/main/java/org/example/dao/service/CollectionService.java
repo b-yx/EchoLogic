@@ -31,5 +31,5 @@ public interface CollectionService {
     void removeRecordFromCollection(Integer recordId, Integer collectionId);
     
     // 合并集合
-    void mergeCollections(Integer targetCollectionId, List<Integer> sourceCollectionIds);
+    void mergeCollections(Integer targetCollectionId, List<Integer> sourceCollectionIds, String name, String description);
 }

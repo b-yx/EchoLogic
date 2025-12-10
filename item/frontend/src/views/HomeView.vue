@@ -30,21 +30,6 @@
       </el-col>
     </el-row>
 
-    <el-row :gutter="20" style="margin-top: 20px;">
-      <el-col :span="24">
-        <el-card class="heatmap-card">
-          <Heatmap 
-            title="用户活动统计" 
-            :data="behaviorData" 
-            v-if="!loadingBehavior"
-            @time-range-change="handleTimeRangeChange"
-            @cell-click="handleCellClick"
-          />
-          <el-skeleton v-else :rows="10" animated />
-        </el-card>
-      </el-col>
-    </el-row>
-
     <el-card class="welcome-card">
       <template #header>
         <span>欢迎使用 EchoLogic</span>
@@ -156,8 +141,6 @@ import recordsApi from '@/api/records'
 import tagsApi from '@/api/tags'
 import collectionsApi from '@/api/collections'
 import contentApi from '@/api/content'
-import behaviorApi from '@/api/behavior'
-import Heatmap from '@/components/Heatmap.vue'
 
 const stats = ref({
   totalRecords: 0,
@@ -178,11 +161,6 @@ const urlImport = ref({
   result: null
 })
 
-// 行为数据
-const behaviorData = ref([])
-const loadingBehavior = ref(false)
-const currentTimeRange = ref('week')
-
 onMounted(async () => {
   try {
     // 获取记录数量
@@ -197,71 +175,12 @@ onMounted(async () => {
     const collectionsData = await collectionsApi.getAllCollections()
     collections.value = collectionsData
     stats.value.totalCollections = collectionsData.length
-    
-    // 获取行为统计数据
-    await loadBehaviorData(currentTimeRange.value)
   } catch (error) {
     console.error('Failed to load stats:', error)
   }
 })
 
-// 加载行为统计数据
-const loadBehaviorData = async (timeRange) => {
-  try {
-    loadingBehavior.value = true
-    currentTimeRange.value = timeRange
-    // 暂时硬编码userId为1L，需要根据实际情况修改
-    const userId = 1
-    const response = await behaviorApi.getBehaviorStats(userId, timeRange)
-    
-    // 处理原始数据，转换为前端期望的格式
-    const rawData = response.data || []
-    const dateMap = new Map()
-    
-    // 1. 按日期分组并计算总和
-    rawData.forEach(item => {
-      const date = item.date
-      const type = item.type
-      const count = item.count || 0
-      
-      if (!dateMap.has(date)) {
-        dateMap.set(date, {
-          date,
-          total: 0,
-          details: {}
-        })
-      }
-      
-      const dateRecord = dateMap.get(date)
-      dateRecord.total += count
-      dateRecord.details[type] = (dateRecord.details[type] || 0) + count
-    })
-    
-    // 2. 转换为数组
-    behaviorData.value = Array.from(dateMap.values())
-    
-    console.log('Processed behavior data:', behaviorData.value)
-  } catch (error) {
-    console.error('Failed to load behavior data:', error)
-    ElMessage.error('加载活动数据失败')
-  } finally {
-    loadingBehavior.value = false
-  }
-}
 
-// 处理时间范围变化
-const handleTimeRangeChange = (timeRange) => {
-  if (timeRange !== currentTimeRange.value) {
-    currentTimeRange.value = timeRange
-    loadBehaviorData(timeRange)
-  }
-}
-
-// 处理单元格点击
-const handleCellClick = (cell) => {
-  // 可以在这里添加更多的点击处理逻辑
-  console.log('点击了单元格:', cell)
-}
 
 // 显示URL导入对话框
 const showUrlImportDialog = () => {

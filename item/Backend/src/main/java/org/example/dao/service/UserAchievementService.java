@@ -1,10 +1,9 @@
 package org.example.dao.service;
 
 import org.example.dao.pojo.UserAchievement;
-import org.example.dao.pojo.UserBehavior;
 import java.util.List;
 
 public interface UserAchievementService {
-    void updateAchievementProgress(Long userId, UserBehavior.BehaviorType behaviorType);
+    // 移除了对UserBehavior的依赖
     List<UserAchievement> getUserAchievements(Long userId);
 }

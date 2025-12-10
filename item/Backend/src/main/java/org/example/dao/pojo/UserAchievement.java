@@ -14,7 +14,6 @@ public class UserAchievement {
     private Long id;
     private Long userId;
     private String achievementName;
-    private UserBehavior.BehaviorType behaviorType;
     private String unlockCondition;
     private Integer conditionValue;
     private Integer currentValue;

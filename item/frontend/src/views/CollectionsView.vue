@@ -39,7 +39,7 @@
       <!-- 集合列表 -->
       <el-row :gutter="20" v-else>
         <el-col
-          v-for="collection in collections"
+          v-for="collection in filteredCollections"
           :key="collection.id"
           :xs="24" :sm="12" :md="8"
         >
@@ -67,7 +67,7 @@
               <p class="description">{{ collection.description || '暂无描述' }}</p>
               
               <div class="collection-stats">
-                <span>{{ collection.recordCount }} 个记录</span>
+                <span>{{ collection.recordCount }}</span>
               </div>
               
               <div class="collection-actions">
@@ -102,10 +102,10 @@
             placeholder="简短描述这个集合..."
           />
         </el-form-item>
-        <el-form-item label="颜色">
+        <el-form-item label="颜色" v-if="!isEdit">
           <el-color-picker v-model="collectionForm.color" show-alpha predefine />
         </el-form-item>
-        <el-form-item label="图标">
+        <el-form-item label="图标" v-if="!isEdit">
           <el-select v-model="collectionForm.icon" placeholder="选择图标" style="width: 100%">
             <el-option label="文件夹" value="folder">
               <span style="float: left">文件夹</span>
@@ -173,9 +173,9 @@
       width="500px"
       @closed="() => selectedCollections.value = []"
     >
-      <el-form :model="{}" label-width="80px">
+      <el-form :model="mergeForm" label-width="80px">
         <el-form-item label="选择目标集合">
-          <el-select v-model="targetCollection" placeholder="请选择目标集合" style="width: 100%">
+          <el-select v-model="targetCollection" placeholder="请选择目标集合" style="width: 100%" @change="updateMergeForm">
             <el-option
               v-for="collection in selectedCollections"
               :key="collection.id"
@@ -201,6 +201,12 @@
             </span>
           </div>
         </el-form-item>
+        <el-form-item label="合并后名称">
+          <el-input v-model="mergeForm.name" placeholder="请输入合并后的集合名称" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="合并后描述">
+          <el-input v-model="mergeForm.description" type="textarea" rows="3" placeholder="请输入合并后的集合描述" style="width: 100%" />
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="mergeDialogVisible = false">取消</el-button>
@@ -214,7 +220,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, shallowRef, inject } from 'vue'
+import { ref, onMounted, shallowRef, inject, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { Plus, Folder, Star, Sugar, CollectionTag, ChatRound, MagicStick, RefreshRight } from '@element-plus/icons-vue'
@@ -238,6 +244,18 @@ const updateCollections = inject('updateCollections')
 const collections = ref([])
 const loading = ref(false)
 const searchKeyword = ref('')
+
+// 搜索过滤
+const filteredCollections = computed(() => {
+  if (!searchKeyword.value.trim()) {
+    return collections.value
+  }
+  const keyword = searchKeyword.value.toLowerCase().trim()
+  return collections.value.filter(collection => 
+    collection.name.toLowerCase().includes(keyword) || 
+    (collection.description && collection.description.toLowerCase().includes(keyword))
+  )
+})
 const dialogVisible = ref(false)
 const saving = ref(false)
 const isEdit = ref(false)
@@ -246,6 +264,10 @@ const aiGenerating = ref(false)
 const mergeDialogVisible = ref(false)
 const selectedCollections = ref([])
 const targetCollection = ref(null)
+const mergeForm = ref({
+  name: '',
+  description: ''
+})
 
 // AI生成集合的表单
 const aiForm = ref({
@@ -362,12 +384,20 @@ const toggleSelect = (collection) => {
   }
 }
 
+const updateMergeForm = () => {
+  if (targetCollection.value) {
+    mergeForm.value.name = targetCollection.value.name
+    mergeForm.value.description = targetCollection.value.description
+  }
+}
+
 const showMergeDialog = () => {
   if (selectedCollections.value.length < 2) {
     ElMessage.warning('请至少选择两个集合进行合并')
     return
   }
   targetCollection.value = selectedCollections.value[0]
+  updateMergeForm()
   mergeDialogVisible.value = true
 }
 
@@ -389,7 +419,9 @@ const mergeCollections = async () => {
   try {
     await collectionsApi.mergeCollections({
       targetCollectionId: targetCollection.value.id,
-      sourceCollectionIds: sourceIds
+      sourceCollectionIds: sourceIds,
+      name: mergeForm.value.name,
+      description: mergeForm.value.description
     })
     
     ElMessage.success('集合合并成功')

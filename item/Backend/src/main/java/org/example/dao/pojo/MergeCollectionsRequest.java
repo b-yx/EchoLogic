@@ -18,4 +18,14 @@ public class MergeCollectionsRequest {
      * 源集合ID列表
      */
     private List<Integer> sourceCollectionIds;
+    
+    /**
+     * 合并后的集合名称（可选）
+     */
+    private String name;
+    
+    /**
+     * 合并后的集合描述（可选）
+     */
+    private String description;
 }

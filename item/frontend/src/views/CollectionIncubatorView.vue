@@ -438,6 +438,8 @@ const loadCollectionData = async () => {
     ElMessage.error('数据加载失败')
     router.push('/collections')
   } finally {
+    // 数据加载完成后，立即显示内容
+    loading.value = false
   }
 }
 
@@ -772,13 +774,8 @@ const getTagStyle = (tag) => {
 
 // 初始化
 onMounted(async () => {
-  // 开始模拟孵化动画
-  simulateIncubation()
-  
-  // 加载集合数据（模拟网络延迟）
-  setTimeout(() => {
-    loadCollectionData()
-  }, 1000)
+  // 直接加载集合数据，不显示孵化动画
+  loadCollectionData()
 })
 </script>
 

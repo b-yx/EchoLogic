@@ -3,7 +3,6 @@ import HomeView from '../views/HomeView.vue'
 import RecordsView from '../views/RecordsView.vue'
 import TagsView from '../views/TagsView.vue'
 import CollectionsView from '../views/CollectionsView.vue'
-import IncubatingView from '../views/IncubatingView.vue'
 import CollectionIncubatorView from '../views/CollectionIncubatorView.vue'
 import ContentGenerateView from '../views/ContentGenerateView.vue'
 
@@ -27,11 +26,6 @@ const routes = [
     path: '/collections',
     name: 'collections',
     component: CollectionsView
-  },
-  {
-    path: '/incubating',
-    name: 'incubating',
-    component: IncubatingView
   },
   {
     path: '/collection/:id',

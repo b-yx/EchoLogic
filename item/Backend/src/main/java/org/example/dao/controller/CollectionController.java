@@ -16,6 +16,7 @@ import org.example.dao.mapper.RecordCollectionMapper;
 import org.example.dao.service.CollectionService;
 import org.example.dao.service.RecordService;
 import org.example.dao.service.AIService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,6 +40,8 @@ public class CollectionController {
     
     @Autowired
     private RecordCollectionMapper recordCollectionMapper;
+    
+
 
     // 获取所有集合
     @GetMapping
@@ -148,7 +151,16 @@ public class CollectionController {
                                        required = true,
                                        content = @Content(schema = @Schema(implementation = MergeCollectionsRequest.class)))
                                MergeCollectionsRequest mergeRequest) {
-        collectionService.mergeCollections(mergeRequest.getTargetCollectionId(), mergeRequest.getSourceCollectionIds());
+        System.out.println("=== 合并集合请求接收到的参数 ===");
+        System.out.println("targetCollectionId: " + mergeRequest.getTargetCollectionId());
+        System.out.println("sourceCollectionIds: " + mergeRequest.getSourceCollectionIds());
+        System.out.println("name: " + mergeRequest.getName());
+        System.out.println("description: " + mergeRequest.getDescription());
+        
+        collectionService.mergeCollections(mergeRequest.getTargetCollectionId(), 
+                                          mergeRequest.getSourceCollectionIds(),
+                                          mergeRequest.getName(),
+                                          mergeRequest.getDescription());
     }
     
     // AI筛选记录并生成集合

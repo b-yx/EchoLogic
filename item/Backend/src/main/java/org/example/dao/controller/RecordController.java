@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.dao.pojo.Record;
 import org.example.dao.pojo.Tagx;
 import org.example.dao.service.RecordService;
-import org.example.dao.service.UserBehaviorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,9 +25,6 @@ public class RecordController {
 
     @Autowired
     private RecordService recordService;
-
-    @Autowired
-    private UserBehaviorService userBehaviorService;
 
     // 获取所有记录
     @GetMapping
@@ -61,7 +57,6 @@ public class RecordController {
             System.out.println("[DEBUG] 查询结果: " + (record != null ? "存在" : "不存在"));
             if (record != null) {
                 System.out.println("[DEBUG] 记录标题: " + record.getTitle());
-                // 移除硬编码的用户行为记录调用，避免使用不存在的用户ID
             }
             return record;
         } catch (Exception e) {
@@ -128,7 +123,9 @@ public class RecordController {
                 recordService.addTagsToRecord(record.getId(), tagIds);
             }
             
-            // 7. 返回保存的记录
+            // 7. 记录用户行为（已移除）
+            
+            // 8. 返回保存的记录
             System.out.println("====== [调试结束] 创建成功，ID: " + record.getId() + " ======");
             return record;
 
@@ -167,7 +164,6 @@ public class RecordController {
         System.out.println("接收到的请求体中content: " + (record != null ? record.getContent() : "null"));
         record.setId(id);
         recordService.updateRecord(record);
-        userBehaviorService.recordBehavior(1L, org.example.dao.pojo.UserBehavior.BehaviorType.EDIT, id.longValue());
         System.out.println("=== 更新记录请求处理完成 ===");
     }
 

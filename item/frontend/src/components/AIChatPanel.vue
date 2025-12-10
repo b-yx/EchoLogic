@@ -8,9 +8,8 @@
     <!-- 消息列表区域 -->
     <div class="messages-area" ref="messagesRef">
       <div v-for="(msg, index) in messages" :key="index" :class="['message-row', msg.role]">
-        <div class="message-bubble">
-          {{ msg.content }}
-        </div>
+        <div class="message-bubble" v-if="msg.role === 'user'">{{ msg.content }}</div>
+        <div class="message-bubble" v-else v-html="markdownToHtml(msg.content)"></div>
       </div>
     </div>
 
@@ -35,6 +34,7 @@
 import { ref, nextTick, defineEmits } from 'vue'
 import { Cpu } from '@element-plus/icons-vue'
 import { chatWithAI } from '../api/ai'
+import showdown from 'showdown'
 
 // 定义事件
 const emit = defineEmits(['execute-command'])
@@ -104,6 +104,12 @@ const scrollToBottom = () => {
   if (messagesRef.value) {
     messagesRef.value.scrollTop = messagesRef.value.scrollHeight
   }
+}
+
+// 辅助函数：Markdown转HTML
+const markdownToHtml = (markdown) => {
+  const converter = new showdown.Converter()
+  return converter.makeHtml(markdown)
 }
 
 // 处理AI的功能性指令

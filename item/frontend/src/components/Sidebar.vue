@@ -34,11 +34,6 @@
           <span>集合</span>
         </el-menu-item>
 
-        <el-menu-item index="/incubating">
-          <el-icon><Sunny /></el-icon>
-          <span>孵化</span>
-        </el-menu-item>
-        
         <el-menu-item index="/content-generate">
           <el-icon><EditPen /></el-icon>
           <span>孵化</span>
@@ -53,7 +48,7 @@ import { useRoute } from 'vue-router'
 // 引入所有需要的图标
 import { 
   House, Document, PriceTag, Folder, // 原有的
-  EditPen, Sunny                     // 新增的
+  EditPen                            // 新增的
 } from '@element-plus/icons-vue'
 
 const route = useRoute()

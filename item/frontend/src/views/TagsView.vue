@@ -27,7 +27,7 @@
       <el-row :gutter="20" v-else>
         <!-- 循环渲染标签卡片 -->
         <el-col
-          v-for="tag in tags"
+          v-for="tag in filteredTags"
           :key="tag.id"
           :xs="24" :sm="12" :md="8" :lg="6"
         >
@@ -43,9 +43,8 @@
                 {{ tag.name }}
               </el-tag>
               
-              <div class="tag-info">
-                <small>关联记录: {{ tag.useCount }} 条</small>
-              </div>
+              <!-- 增加标签和按钮之间的间隔 -->
+              <div style="margin: 20px 0;"></div>
               
               <div class="tag-actions">
                 <el-button size="small" @click="editTag(tag)">编辑</el-button>
@@ -85,7 +84,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import tagsApi from '@/api/tags'
@@ -97,6 +96,17 @@ const searchKeyword = ref('')
 const dialogVisible = ref(false)
 const saving = ref(false)
 const isEdit = ref(false)
+
+// 搜索过滤计算属性
+const filteredTags = computed(() => {
+  if (!searchKeyword.value.trim()) {
+    return tags.value
+  }
+  const keyword = searchKeyword.value.toLowerCase().trim()
+  return tags.value.filter(tag => 
+    tag.name.toLowerCase().includes(keyword)
+  )
+})
 
 const tagForm = ref({
   id: null,
@@ -226,7 +236,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px 0;
+  padding: 15px 0;
+  gap: 10px;
 }
 
 .tag-info {

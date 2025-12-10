@@ -42,82 +42,27 @@ CREATE TABLE IF NOT EXISTS record_collection (
     FOREIGN KEY (record_id) REFERENCES record(id) ON DELETE CASCADE,
     FOREIGN KEY (collection_id) REFERENCES collection(id) ON DELETE CASCADE
 );
--- ----------------------------
--- 成长感知与激励模块
--- ----------------------------
 
--- 用户行为表
-CREATE TABLE `user_behavior` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `user_id` bigint(20) NOT NULL COMMENT '用户ID',
-  `behavior_type` varchar(50) NOT NULL COMMENT '行为类型: COLLECT, INCUBATE',
-  `behavior_time` datetime NOT NULL COMMENT '行为发生时间',
-  `related_id` bigint(20) DEFAULT NULL COMMENT '关联的Collection或Record ID',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  PRIMARY KEY (`id`),
-  KEY `idx_user_time` (`user_id`, `behavior_time`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户行为记录表';
+-- 创建网页内容表，用于存储网页解析内容
+CREATE TABLE IF NOT EXISTS web_content (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    collection_id INT NULL, -- 允许为NULL，支持不关联集合的记录
+    source_url VARCHAR(255),
+    title VARCHAR(255),
+    parsed_text TEXT,
+    cover_image_path VARCHAR(255),
+    summary TEXT,
+    tags VARCHAR(255),
+    media_type VARCHAR(20),
+    create_time DATETIME,
+    FOREIGN KEY (collection_id) REFERENCES collection(id) ON DELETE SET NULL
+);
 
-
-
--- 每日任务模板表
-CREATE TABLE `daily_task` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `task_name` varchar(255) NOT NULL COMMENT '任务名称',
-  `behavior_type` varchar(50) NOT NULL COMMENT '关联的行为类型',
-  `target_count` int(11) NOT NULL COMMENT '目标数量',
-  `reward` int(11) DEFAULT '0' COMMENT '奖励（如AI次数）',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='每日任务模板表';
+-- 创建web_content表的索引
+CREATE INDEX idx_web_content_collection_id ON web_content(collection_id);
+CREATE INDEX idx_web_content_media_type ON web_content(media_type);
+CREATE INDEX idx_web_content_create_time ON web_content(create_time);
 
 
--- 用户每日任务表
-CREATE TABLE `user_daily_task` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `user_id` bigint(20) NOT NULL,
-  `task_id` bigint(20) NOT NULL,
-  `create_date` date NOT NULL COMMENT '任务日期',
-  `current_count` int(11) DEFAULT '0' COMMENT '当前完成数量',
-  `is_completed` tinyint(1) DEFAULT '0' COMMENT '是否完成 (0:否, 1:是)',
-  `reward_received` tinyint(1) DEFAULT '0' COMMENT '是否领取奖励 (0:否, 1:是)',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_user_task_date` (`user_id`, `task_id`, `create_date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户每日任务关联表';
-
-
--- 用户成就表
-CREATE TABLE `user_achievement` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `user_id` bigint(20) NOT NULL,
-  `achievement_name` varchar(255) NOT NULL COMMENT '成就名称',
-  `behavior_type` varchar(50) DEFAULT NULL COMMENT '关联的行为类型',
-  `unlock_condition` varchar(255) DEFAULT NULL COMMENT '解锁条件描述',
-  `condition_value` int(11) NOT NULL COMMENT '条件阈值',
-  `current_value` int(11) DEFAULT '0' COMMENT '当前进度',
-  `is_unlocked` tinyint(1) DEFAULT '0' COMMENT '是否解锁 (0:否, 1:是)',
-  `unlock_time` datetime DEFAULT NULL COMMENT '解锁时间',
-  PRIMARY KEY (`id`),
-  KEY `idx_user_id` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户成就表';
-
--- 插入示例数据
-INSERT INTO `daily_task` (task_name, behavior_type, target_count, reward) VALUES ('今日收藏3条内容', 'COLLECT', 3, 10);
-INSERT INTO `daily_task` (task_name, behavior_type, target_count, reward) VALUES ('今日孵化1个文集', 'INCUBATE', 1, 20);
-
-INSERT INTO `user_achievement` (user_id, achievement_name, unlock_condition, condition_value) VALUES (1, '收藏新星', '累计收藏10条内容', 10);
-INSERT INTO `user_achievement` (user_id, achievement_name, unlock_condition, condition_value) VALUES (1, '收藏达人', '累计收藏100条内容', 100);
-INSERT INTO `user_achievement` (user_id, achievement_name, unlock_condition, condition_value) VALUES (1, '孵化先锋', '累计孵化5个文集', 5);
-UPDATE user_achievement SET behavior_type='COLLECT' WHERE behavior_type IS NULL AND achievement_name LIKE '%收藏%';
-UPDATE user_achievement SET behavior_type='INCUBATE' WHERE behavior_type IS NULL AND achievement_name LIKE '%孵化%';
-
-CREATE TABLE IF NOT EXISTS `user_ai_quota` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `user_id` bigint(20) NOT NULL,
-  `quota` int(11) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_user_quota` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
