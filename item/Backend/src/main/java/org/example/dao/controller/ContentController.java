@@ -19,6 +19,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/content")
@@ -46,7 +48,8 @@ public class ContentController {
     @PostMapping("/parse-url")
     public ResponseEntity<?> parseUrl(@RequestBody ParseUrlRequest request) {
         try {
-            WebContent webContent = webParseService.parseAndSave(request.getUrl());
+            // 传递URL和可选的集合ID给解析方法
+            WebContent webContent = webParseService.parseAndSave(request.getUrl(), request.getCollectionId());
             return ResponseEntity.ok(webContent);
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -72,6 +75,9 @@ public class ContentController {
     public ResponseEntity<GenerateResponse> generate(@RequestBody GenerateRequest req) {
         try {
             GenerateResponse response = aiGenerationService.generate(req);
+            // 将<EOL>替换为实际的换行符
+            String processedResult = response.getResult().replace("<EOL>", "\n");
+            response.setResult(processedResult);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -95,6 +101,9 @@ public class ContentController {
     public ResponseEntity<GenerateResponse> refine(@RequestBody RefineRequest req) {
         try {
             GenerateResponse response = aiGenerationService.refine(req);
+            // 将<EOL>替换为实际的换行符
+            String processedResult = response.getResult().replace("<EOL>", "\n");
+            response.setResult(processedResult);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

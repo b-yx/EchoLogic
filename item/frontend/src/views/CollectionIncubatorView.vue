@@ -157,87 +157,154 @@
       width="600px"
       @closed="resetForm"
     >
-      <el-form label-width="80px">
-        <el-form-item label="记录标题">
-          <el-input v-model="newRecord.title" placeholder="请输入记录标题" />
-        </el-form-item>
-        <el-form-item label="记录类型">
-          <el-select v-model="newRecord.contentType" style="width: 100%">
-            <el-option label="文本" value="TEXT" />
-            <el-option label="链接" value="LINK" />
-            <el-option label="图片" value="IMAGE" />
-            <el-option label="视频" value="VIDEO" />
-            <el-option label="音频" value="AUDIO" />
-            <el-option label="文档" value="DOCUMENT" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="记录内容">
-          <el-input
-            v-model="newRecord.content"
-            :placeholder="getContentTypePlaceholder"
-            type="textarea"
-            :rows="4"
-          />
-        </el-form-item>
-        <!-- 标签输入区域 -->
-        <el-form-item label="标签">
-          <div class="tag-input-wrapper">
-            <!-- 使用 el-select 替代原来的 input -->
-            <el-select
-              v-model="recordTagNames"
-              multiple
-              filterable
-              allow-create
-              default-first-option
-              placeholder="请选择或输入新标签"
-              style="width: 100%"
-            >
-              <el-option
-                v-for="item in availableTags"
-                :key="item.id"
-                :label="item.name"
-                :value="item.name"
-              >
-                <!-- 下拉框中显示颜色圆点 -->
-                <span class="flex items-center">
-                  <span 
-                    class="color-dot" 
-                    :style="{ 
-                      display: 'inline-block', 
-                      width: '8px', 
-                      height: '8px', 
-                      borderRadius: '50%', 
-                      marginRight: '8px',
-                      backgroundColor: item.color || '#409EFF' 
-                    }"
-                  ></span>
-                  {{ item.name }}
-                </span>
-              </el-option>
-            </el-select>
+      <el-tabs v-model="createRecordTab" type="card">
+        <el-tab-pane label="手动输入" name="manual">
+          <el-form label-width="80px">
+            <el-form-item label="记录标题">
+              <el-input v-model="newRecord.title" placeholder="请输入记录标题" />
+            </el-form-item>
+            <el-form-item label="记录类型">
+              <el-select v-model="newRecord.contentType" style="width: 100%">
+                <el-option label="文本" value="TEXT" />
+                <el-option label="链接" value="LINK" />
+                <el-option label="图片" value="IMAGE" />
+                <el-option label="视频" value="VIDEO" />
+                <el-option label="音频" value="AUDIO" />
+                <el-option label="文档" value="DOCUMENT" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="记录内容">
+              <el-input
+                v-model="newRecord.content"
+                :placeholder="getContentTypePlaceholder"
+                type="textarea"
+                :rows="4"
+              />
+            </el-form-item>
+            <!-- 标签输入区域 -->
+            <el-form-item label="标签">
+              <div class="tag-input-wrapper">
+                <!-- 使用 el-select 替代原来的 input -->
+                <el-select
+                  v-model="recordTagNames"
+                  multiple
+                  filterable
+                  allow-create
+                  default-first-option
+                  placeholder="请选择或输入新标签"
+                  style="width: 100%"
+                >
+                  <el-option
+                    v-for="item in availableTags"
+                    :key="item.id"
+                    :label="item.name"
+                    :value="item.name"
+                  >
+                    <!-- 下拉框中显示颜色圆点 -->
+                    <span class="flex items-center">
+                      <span 
+                        class="color-dot" 
+                        :style="{ 
+                          display: 'inline-block', 
+                          width: '8px', 
+                          height: '8px', 
+                          borderRadius: '50%', 
+                          marginRight: '8px',
+                          backgroundColor: item.color || '#409EFF' 
+                        }"
+                      ></span>
+                      {{ item.name }}
+                    </span>
+                  </el-option>
+                </el-select>
 
-            <!-- 保留推荐标签功能（可选，点击快速添加到上面的选择框中） -->
-            <div class="suggestions" v-if="availableTags.length > 0">
-              <span class="text-xs text-gray-400 mr-2" style="margin-top: 8px; display: inline-block;">推荐:</span>
-              <el-tag
-                v-for="tag in availableTags.slice(0, 5)"
-                :key="tag.id"
-                size="small"
-                class="cursor-pointer mr-1 hover-effect"
-                :style="{ color: tag.color, borderColor: tag.color, marginTop: '8px' }"
-                effect="plain"
-                @click="selectSuggestion(tag)"
+                <!-- 保留推荐标签功能（可选，点击快速添加到上面的选择框中） -->
+                <div class="suggestions" v-if="availableTags.length > 0">
+                  <span class="text-xs text-gray-400 mr-2" style="margin-top: 8px; display: inline-block;">推荐:</span>
+                  <el-tag
+                    v-for="tag in availableTags.slice(0, 5)"
+                    :key="tag.id"
+                    size="small"
+                    class="cursor-pointer mr-1 hover-effect"
+                    :style="{ color: tag.color, borderColor: tag.color, marginTop: '8px' }"
+                    effect="plain"
+                    @click="selectSuggestion(tag)"
+                  >
+                    {{ tag.name }}
+                  </el-tag>
+                </div>
+              </div>
+            </el-form-item>
+          </el-form>
+        </el-tab-pane>
+        <el-tab-pane label="从URL导入" name="url">
+          <el-form label-width="80px">
+            <el-form-item label="URL地址">
+              <el-input
+                v-model="urlImport.url"
+                placeholder="请输入网页URL地址"
+                :disabled="urlImport.loading"
               >
-                {{ tag.name }}
-              </el-tag>
-            </div>
-          </div>
-        </el-form-item>
-      </el-form>
+                <template #append>
+                  <el-button 
+                    type="primary" 
+                    @click="importFromUrl" 
+                    :loading="urlImport.loading"
+                  >
+                    <LinkIcon /> 导入
+                  </el-button>
+                </template>
+              </el-input>
+            </el-form-item>
+            <el-form-item label="导入结果" v-if="urlImport.result">
+              <el-card shadow="hover">
+                <el-descriptions :column="1" border>
+                  <el-descriptions-item label="标题">
+                    {{ urlImport.result.title }}
+                  </el-descriptions-item>
+                  <el-descriptions-item label="内容摘要">
+                    <div style="white-space: pre-wrap; line-height: 1.6; max-height: 200px; overflow-y: auto;">
+                      {{ urlImport.result.parsedText || '无摘要' }}
+                    </div>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="自动标签">
+                    <div>
+                      <el-tag 
+                        v-for="tag in urlImport.result.tags" 
+                        :key="tag" 
+                        size="small" 
+                        class="mr-1"
+                      >
+                        {{ tag }}
+                      </el-tag>
+                      <span v-if="!urlImport.result.tags || urlImport.result.tags.length === 0">无标签</span>
+                    </div>
+                  </el-descriptions-item>
+                </el-descriptions>
+              </el-card>
+            </el-form-item>
+          </el-form>
+        </el-tab-pane>
+      </el-tabs>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="showCreateDialog = false">取消</el-button>
-          <el-button type="primary" @click="createRecord">创建</el-button>
+          <el-button 
+            v-if="createRecordTab === 'manual'" 
+            type="primary" 
+            @click="createRecord"
+          >
+            创建记录
+          </el-button>
+          <el-button 
+            v-if="createRecordTab === 'url'" 
+            type="primary" 
+            @click="createRecordFromUrl"
+            :disabled="!urlImport.result"
+            :loading="creating"
+          >
+            创建记录
+          </el-button>
         </span>
       </template>
     </el-dialog>
@@ -287,11 +354,12 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElDialog, ElMessageBox } from 'element-plus'
 import { 
   Folder, Star, Sugar, CollectionTag, ArrowLeft, 
-  Document, Clock, RefreshRight, Plus 
+  Document, Clock, RefreshRight, Plus, Link as LinkIcon 
 } from '@element-plus/icons-vue'
 import collectionsApi from '@/api/collections'
 import recordsApi from '@/api/records'
 import tagsApi from '@/api/tags'
+import contentApi from '@/api/content'
 
 // 路由相关
 const route = useRoute()
@@ -311,10 +379,12 @@ const creating = ref(false)
 const progress = ref(0)
 const collection = ref(null)
 const records = ref([])
+const tagLoading = ref(false)
 const availableTags = ref([])
 
 // 创建记录相关状态
 const showCreateDialog = ref(false)
+const createRecordTab = ref('manual')
 const newRecord = ref({
   title: '',
   content: '',
@@ -322,6 +392,12 @@ const newRecord = ref({
 })
 // 标签相关状态
 const recordTagNames = ref([])
+// URL导入相关状态
+const urlImport = ref({
+  url: '',
+  loading: false,
+  result: null
+})
 
 // 进度条颜色
 const customColorMethod = (percentage) => {
@@ -505,6 +581,39 @@ const resetForm = () => {
     contentType: 'TEXT'
   }
   recordTagNames.value = []
+  createRecordTab.value = 'manual'
+  urlImport.value = {
+    url: '',
+    loading: false,
+    result: null
+  }
+}
+
+// 从URL导入
+const importFromUrl = async () => {
+  if (!urlImport.url.trim()) {
+    return ElMessage.warning('请输入URL地址')
+  }
+  
+  urlImport.loading = true
+  try {
+    // 传递当前集合的ID作为请求参数
+    const result = await contentApi.parseUrl({
+      url: urlImport.url,
+      collectionId: parseInt(route.params.id)
+    })
+    // 将后端返回的逗号分隔标签字符串转换为数组
+    if (result.tags && typeof result.tags === 'string') {
+      result.tags = result.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+    }
+    urlImport.result = result
+    ElMessage.success('导入成功！')
+  } catch (error) {
+    console.error('从URL导入失败:', error)
+    ElMessage.error('导入失败，请检查URL是否正确或稍后重试')
+  } finally {
+    urlImport.loading = false
+  }
 }
 
 const viewDialogVisible = ref(false)
@@ -514,6 +623,90 @@ const currentRecord = ref({})
 const handleView = (row) => {
   currentRecord.value = { ...row } 
   viewDialogVisible.value = true
+}
+
+// 从URL结果创建记录
+const createRecordFromUrl = async () => {
+  if (!urlImport.result) {
+    return ElMessage.warning('请先导入URL')
+  }
+  
+  creating.value = true
+  try {
+    const { title, parsedText, tags } = urlImport.result
+    let createdRecord = null
+    
+    // 单独处理记录创建，确保即使后续步骤失败也能正确反馈
+    try {
+      // 创建记录主体
+      const recordPayload = {
+        title: title,
+        content: parsedText,
+        contentType: 'TEXT'
+      }
+      createdRecord = await recordsApi.createRecord(recordPayload)
+    } catch (error) {
+      console.error('创建记录失败:', error)
+      ElMessage.error('保存失败')
+      return
+    }
+    
+    // 处理可选的集合关联和标签
+    try {
+      // 通过多对多关系API将记录添加到集合
+      await collectionsApi.addRecordToCollection(collection.value.id, createdRecord.id)
+      
+      // 处理标签
+      const finalTags = []
+      
+      if (tags && tags.length > 0) {
+        // 获取最新标签库
+        const currentAllTags = await tagsApi.getAllTags()
+        
+        for (const name of tags) {
+          // 查找是否已存在
+          const existTag = currentAllTags.find(t => t.name === name)
+          
+          if (existTag) {
+            // 存在 -> 关联
+            await tagsApi.associateWithRecord(createdRecord.id, existTag.id)
+            finalTags.push(existTag)
+          } else {
+            // 不存在 -> 创建新标签
+            const newTagRes = await tagsApi.createTag({ 
+              name, 
+              recordId: createdRecord.id 
+            })
+            finalTags.push(newTagRes)
+          }
+        }
+      }
+      
+      // 更新前端列表
+      const recordForDisplay = {
+        ...createdRecord,
+        tags: finalTags
+      }
+      
+      records.value.unshift(recordForDisplay)
+      ElMessage.success('创建成功！')
+      showCreateDialog.value = false
+    } catch (error) {
+      console.error('记录关联操作失败:', error)
+      // 记录已保存，只提示关联操作可能失败
+      ElMessage.warning('记录保存成功，但部分关联操作失败')
+      showCreateDialog.value = false
+    }
+    
+    // 刷新推荐标签列表
+    loadAvailableTags()
+    
+  } catch (error) {
+    console.error(error)
+    ElMessage.error('创建失败')
+  } finally {
+    creating.value = false
+  }
 }
 
 // 删除处理函数

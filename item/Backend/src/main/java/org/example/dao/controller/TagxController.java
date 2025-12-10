@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.dao.pojo.Tagx;
 import org.example.dao.service.TagxService;
+import org.example.dao.service.RecordService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.RequestEntity;
@@ -23,11 +24,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/tags")
-@Tag(name = "标签管理", description = "标签的增删改查操作")
+@Tag(name = "标签管理", description = "标签的增删改查功能")
 public class TagxController {
-
     @Autowired
     private TagxService tagService;
+    
+    @Autowired
+    private RecordService recordService;
 
     // 获取所有标签
     @GetMapping
@@ -64,13 +67,22 @@ public class TagxController {
             @ApiResponse(responseCode = "201", description = "创建成功"),
             @ApiResponse(responseCode = "400", description = "请求参数错误或标签名称已存在")
     })
-    public void createTag(@RequestBody 
-                        @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                                description = "标签信息", 
-                                required = true,
-                                content = @Content(schema = @Schema(implementation = Tagx.class)))
-                            Tagx tag) {
+    public Tagx createTag(@RequestBody Map<String, Object> requestBody) {
+        // 1. 从请求体中提取标签信息
+        Tagx tag = new Tagx();
+        tag.setName((String) requestBody.get("name"));
+        tag.setColor((String) requestBody.get("color"));
+        
+        // 2. 创建标签
         tagService.createTag(tag);
+        
+        // 3. 检查是否有recordId参数，如果有则建立标签与记录的关联
+        Integer recordId = (Integer) requestBody.get("recordId");
+        if (recordId != null) {
+            recordService.addTagToRecord(recordId, tag.getId());
+        }
+        
+        return tag;
     }
 
     // 添加一个测试接口，用于验证API是否正常工作

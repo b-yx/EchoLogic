@@ -3,7 +3,7 @@
   <div class="incubating-container">
     <!-- 标题 -->
     <div class="page-header">
-      <h2>Incubating</h2>
+      <h2>孵化</h2>
     </div>
 
     <!-- === 核心编辑器区域 (复刻 a.html) === -->

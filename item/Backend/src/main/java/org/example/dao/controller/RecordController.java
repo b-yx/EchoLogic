@@ -55,9 +55,20 @@ public class RecordController {
             @ApiResponse(responseCode = "404", description = "记录不存在")
     })
     public Record getRecordById(@PathVariable Integer id) {
-        Record record = recordService.findById(id);
-        userBehaviorService.recordBehavior(1L, org.example.dao.pojo.UserBehavior.BehaviorType.VIEW, id.longValue());
-        return record;
+        try {
+            System.out.println("[DEBUG] 获取记录ID: " + id);
+            Record record = recordService.findById(id);
+            System.out.println("[DEBUG] 查询结果: " + (record != null ? "存在" : "不存在"));
+            if (record != null) {
+                System.out.println("[DEBUG] 记录标题: " + record.getTitle());
+                // 移除硬编码的用户行为记录调用，避免使用不存在的用户ID
+            }
+            return record;
+        } catch (Exception e) {
+            System.err.println("[ERROR] 获取记录失败: ");
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     // 根据集合ID获取记录列表

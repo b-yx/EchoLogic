@@ -5,6 +5,7 @@ import TagsView from '../views/TagsView.vue'
 import CollectionsView from '../views/CollectionsView.vue'
 import IncubatingView from '../views/IncubatingView.vue'
 import CollectionIncubatorView from '../views/CollectionIncubatorView.vue'
+import ContentGenerateView from '../views/ContentGenerateView.vue'
 
 const routes = [
   {
@@ -37,6 +38,11 @@ const routes = [
     name: 'collection-incubator',
     component: CollectionIncubatorView,
     props: true
+  },
+  {
+    path: '/content-generate',
+    name: 'content-generate',
+    component: ContentGenerateView
   }
 ]
 

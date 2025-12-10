@@ -56,22 +56,18 @@
           <template #default="{ row }">
             <div class="tags-wrapper">
               <template v-if="(row.tags || []).length > 0">
+                <!-- 调试信息 -->
+                <div style="margin-bottom: 5px; color: #999; font-size: 12px;">
+                  共{{ (row.tags || []).length }}个标签
+                </div>
                 <el-tag 
                   v-for="(tag, index) in (row.tags || [])" 
-                  :key="tag?.id || index" 
+                  :key="index" 
                   size="small"
                   :style="{ backgroundColor: tag?.color || '#409eff', borderColor: tag?.color || '#409eff', color: 'white' }"
                   class="mr-1"
-                  v-if="index < 3"
                 >
-                  {{ tag?.name || '未知标签' }}
-                </el-tag>
-                <el-tag 
-                  v-if="(row.tags || []).length > 3" 
-                  size="small" 
-                  effect="plain"
-                >
-                  +{{ (row.tags || []).length - 3 }}
+                  {{ tag?.name || `标签${index+1}` }}
                 </el-tag>
               </template>
               <span v-else class="text-gray-500">暂无标签</span>
@@ -285,6 +281,14 @@ const loadRecords = async () => {
   try {
     const data = await recordsApi.getAllRecords()
     console.log('获取到的记录数据:', data)
+    // 调试标签数据
+    if (data.length > 0) {
+      const firstRecord = data[0]
+      console.log('第一条记录的标签:', firstRecord.tags)
+      if (firstRecord.tags && firstRecord.tags.length > 0) {
+        console.log('标签数据格式:', firstRecord.tags[0])
+      }
+    }
     records.value = data 
     console.log('records数组长度:', records.value.length)
   } catch (error) {

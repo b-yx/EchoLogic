@@ -7,12 +7,20 @@ import java.util.List;
 
 @Mapper
 public interface RecordMapper {
-    // 查询所有记录（排除已删除的）
+    // 查询所有记录（排除已删除的），并加载关联的标签
     @Select("SELECT * FROM record WHERE deleted = false ORDER BY create_time DESC")
+    @Results({
+        @Result(column = "id", property = "id"),
+        @Result(column = "id", property = "tags", many = @Many(select = "org.example.dao.mapper.TagxMapper.findByRecordId"))
+    })
     List<Record> findAll();
     
-    // 根据ID查询记录
+    // 根据ID查询记录，并加载关联的标签
     @Select("SELECT * FROM record WHERE id = #{id}")
+    @Results({
+        @Result(column = "id", property = "id"),
+        @Result(column = "id", property = "tags", many = @Many(select = "org.example.dao.mapper.TagxMapper.findByRecordId"))
+    })
     Record findById(Integer id);
     
     // 添加记录

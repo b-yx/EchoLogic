@@ -38,6 +38,11 @@
           <el-icon><Sunny /></el-icon>
           <span>孵化</span>
         </el-menu-item>
+        
+        <el-menu-item index="/content-generate">
+          <el-icon><EditPen /></el-icon>
+          <span>孵化</span>
+        </el-menu-item>
       </el-menu>
   </div>
 </template>

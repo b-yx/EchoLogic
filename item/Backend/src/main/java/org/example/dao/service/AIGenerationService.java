@@ -21,12 +21,27 @@ public class AIGenerationService {
     }
 
     public GenerateResponse refine(RefineRequest req) {
-        String prompt = 
-                "以下是用户之前生成的内容，请继续深化、扩展或调整：\n" +
-                "【当前内容】\n" + req.getCurrentContent() +
-                "\n\n【用户新指令】\n" + req.getInstruction();
+        StringBuilder prompt = new StringBuilder();
+        prompt.append("你是一个智能助手，能够与用户进行多轮对话，基于之前的对话内容继续深化、扩展或调整想法。\n");
+        
+        // 添加对话历史
+        if (req.getDialogueHistory() != null && !req.getDialogueHistory().isEmpty()) {
+            prompt.append("【对话历史】\n");
+            for (java.util.Map<String, String> message : req.getDialogueHistory()) {
+                String role = message.get("role");
+                String content = message.get("content");
+                prompt.append(role.equals("user") ? "用户：" : "助手：").append(content).append("\n");
+            }
+        }
+        
+        // 添加当前内容和用户新指令
+        if (req.getCurrentContent() != null && !req.getCurrentContent().isEmpty()) {
+            prompt.append("\n【当前内容】\n").append(req.getCurrentContent()).append("\n");
+        }
+        
+        prompt.append("\n【用户新指令】\n").append(req.getInstruction());
 
-        String output = aiService.callDeepSeekApi(prompt, null, null, null);
+        String output = aiService.callDeepSeekApi(prompt.toString(), null, null, null);
         return new GenerateResponse(output, System.currentTimeMillis());
     }
 

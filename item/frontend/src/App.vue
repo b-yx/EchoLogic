@@ -17,15 +17,10 @@
         <!-- 3. 下方内容区分割  -->
         <el-container class="content-wrapper">
           
-          <!-- 中间：主路由视图 -->
+          <!-- 主路由视图 -->
           <el-main class="main-content">
             <router-view @update-records="handleUpdateRecords" @update-collections="handleUpdateCollections" />
           </el-main>
-
-          <!-- 右侧：AI 对话框 (固定宽度 350px) -->
-          <el-aside width="350px" class="ai-panel-container">
-            <AIChatPanel @execute-command="handleExecuteCommand" />
-          </el-aside>
 
         </el-container>
       </el-container>
@@ -43,7 +38,6 @@
 import { computed, ref, provide } from 'vue'
 import { useRoute } from 'vue-router'
 import Sidebar from '@/components/Sidebar.vue'
-import AIChatPanel from '@/components/AIChatPanel.vue'
 import FloatingRecords from '@/components/FloatingRecords.vue'
 import CollectionsBottomBar from '@/components/CollectionsBottomBar.vue'
 
@@ -56,10 +50,12 @@ const collectionsBottomBarRef = ref(null)
 const pageTitle = computed(() => {
   const titles = {
     '/': '首页',
-    '/incubating': '灵感孵化',
+    '/incubating': '孵化',
+    '/generate': '孵化',
     '/records': '记录',
     '/tags': '标签',
-    '/collections': '集合'
+    '/collections': '集合',
+    '/content-generate': '内容生成'
   }
   return titles[route.path] || 'EchoLogic'
 })
@@ -77,64 +73,7 @@ const handleUpdateCollections = async () => {
   }
 }
 
-// 处理AI指令
-const handleExecuteCommand = (command) => {
-  console.log('收到AI指令:', command)
-  
-  // 根据指令类型执行不同操作
-  switch (command.command) {
-    case 'filter':
-      handleFilterCommand(command.params)
-      break
-    case 'search':
-      handleSearchCommand(command.params)
-      break
-    case 'navigate':
-      handleNavigateCommand(command.params)
-      break
-    case 'list':
-      handleListCommand(command.params)
-      break
-    default:
-      console.warn('未知指令类型:', command.command)
-  }
-}
 
-// 处理列表指令
-const handleListCommand = (params) => {
-  console.log('执行列表指令:', params)
-  // 例如，可以导航到记录页面
-  if (route.path !== '/records') {
-    window.location.href = '#/records'
-  }
-}
-
-// 处理筛选指令
-const handleFilterCommand = (params) => {
-  console.log('执行筛选指令:', params)
-  // 如果当前不在Records页面，先导航到Records页面
-  if (route.path !== '/records') {
-    // 使用路由参数传递筛选条件
-    window.location.href = `#/records?filter=${encodeURIComponent(JSON.stringify(params))}`
-  } else {
-    // 如果已经在Records页面，刷新页面并应用筛选条件
-    window.location.href = `#/records?filter=${encodeURIComponent(JSON.stringify(params))}`
-    // 强制刷新当前路由，以便组件重新加载并应用筛选条件
-    window.location.reload()
-  }
-}
-
-// 处理搜索指令
-const handleSearchCommand = (params) => {
-  console.log('执行搜索指令:', params)
-  // 例如，可以导航到搜索结果页面
-}
-
-// 处理导航指令
-const handleNavigateCommand = (params) => {
-  console.log('执行导航指令:', params)
-  // 例如，可以跳转到指定页面
-}
 
 // 提供全局数据同步方法
 provide('updateRecords', handleUpdateRecords)
@@ -192,10 +131,5 @@ provide('updateCollections', handleUpdateCollections)
   overflow-y: auto; 
 }
 
-.ai-panel-container {
-  background-color: #fff;
-  height: 100%;
-  overflow: hidden;
-  box-shadow: -2px 0 5px rgba(0,0,0,0.03); 
-}
+
 </style>
